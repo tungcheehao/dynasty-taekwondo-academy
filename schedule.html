@@ -5,48 +5,64 @@
   <title>课程时间表 - Dynasty Taekwondo</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; max-width: 900px; margin: 0 auto; }
-    th, td { border: 1px solid #aaa; padding: 10px; }
-    th { background-color: #f2f2f2; }
-    h1 { margin-bottom: 20px; }
+    body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #f9f9f9; color: #333; }
+    h1, h2 { text-align: center; color: #003049; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 900px;
+      margin: 20px auto;
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #a2d5f2;
+    }
+    .note {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 10px;
+      font-size: 15px;
+      text-align: center;
+      color: #666;
+    }
   </style>
 </head>
 <body>
-  <h1>BOTANI TAEKWONDO 课程时间表</h1>
+  <h1>🕒 课程时间表<br>Class Timetable</h1>
+
+  <h2>📍 BOTANI 道馆 Botani Dojang</h2>
   <table>
-    <tr>
-      <th>星期一<br>MONDAY</th>
-      <th>星期二<br>TUESDAY</th>
-      <th>星期三<br>WEDNESDAY</th>
-      <th>星期四<br>THURSDAY</th>
-      <th>星期五<br>FRIDAY</th>
-      <th>星期六<br>SATURDAY</th>
-      <th>星期日<br>SUNDAY</th>
-    </tr>
-    <tr>
-      <td>5pm - 6.30pm<br>7.30pm - 9pm</td>
-      <td>5pm - 6.30pm<br>7.30pm - 9pm</td>
-      <td>5pm - 6.30pm<br>7.30pm - 9pm</td>
-      <td>5pm - 6.30pm<br>7.30pm - 9pm</td>
-      <td>
-        9am - 10.30am<br>
-        11am - 12.30pm<br>
-        5pm - 6.30pm<br>
-        7.30pm - 9pm
-      </td>
-      <td>
-        6.30am - 8am<br>
-        1.30pm - 3pm<br>
-        7.30pm - 9pm
-      </td>
-      <td>
-        9am - 10.30am<br>
-        10.30am - 12pm<br>
-        5pm - 6.30pm
-      </td>
-    </tr>
+    <tr><th>星期 Day</th><th>时间 Time</th></tr>
+    <tr><td>星期一 Monday</td><td>7:30PM - 9:00PM</td></tr>
+    <tr><td>星期二 Tuesday</td><td>5:00PM - 6:30PM、7:30PM - 9:00PM</td></tr>
+    <tr><td>星期三 Wednesday</td><td>5:00PM - 6:30PM、7:30PM - 9:00PM</td></tr>
+    <tr><td>星期四 Thursday</td><td>5:00PM - 6:30PM、7:30PM - 9:00PM</td></tr>
+    <tr><td>星期五 Friday</td><td>5:00PM - 6:30PM、7:30PM - 9:00PM</td></tr>
+    <tr><td>星期六 Saturday</td><td>9:00AM - 10:30AM、1:30PM - 3:00PM、5:00PM - 6:30PM、7:30PM - 9:00PM</td></tr>
+    <tr><td>星期日 Sunday</td><td>6:30AM - 8:00AM、9:00AM - 10:30AM、10:30AM - 12:00PM</td></tr>
   </table>
-  <p style="margin-top: 20px;">如有任何更动将提前通过 WhatsApp 公告。</p>
+
+  <h2>📍 斗母宫（Tow Boo Keong）道馆</h2>
+  <table>
+    <tr><th>星期 Day</th><th>时间 Time</th></tr>
+    <tr><td>星期五 Friday</td><td>7:30PM - 9:00PM</td></tr>
+    <tr><td>星期六 Saturday</td><td>7:30PM - 9:00PM</td></tr>
+  </table>
+
+  <div class="note">
+    ⚠️ 每月 29/30/31 日为武馆休息日。<br>
+    ⚠️ The academy is closed every 29th, 30th & 31st of the month.
+  </div>
+
+  <div class="note" style="margin-top: 20px; font-style: italic;">
+    （如需更改时间，请联系管理员或更新 GitHub 中的 <strong>schedule.html</strong> 文件）<br>
+    (To update this schedule, please edit the <strong>schedule.html</strong> file in GitHub.)
+  </div>
 </body>
 </html>
