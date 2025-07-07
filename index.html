@@ -56,11 +56,25 @@
     }
   </style>
 </head>
+
 <body>
   <header>
     <h1>Dynasty Taekwondo Academy</h1>
     <p>我们致力于让每个孩子变得更强、更有信心</p>
   </header>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "你的API KEY",
+    authDomain: "你的项目ID.firebaseapp.com",
+    projectId: "你的项目ID",
+    storageBucket: "你的项目ID.appspot.com",
+    messagingSenderId: "XXXXXX",
+    appId: "XXXXXX"
+  };
+  firebase.initializeApp(firebaseConfig);
+</script>
 
   <main>
     <section class="info">
