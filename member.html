@@ -5,25 +5,76 @@
   <title>会员专区 - Dynasty Taekwondo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      background-color: #f2f2f2;
+      color: #333;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    form {
+      max-width: 500px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    button {
+      background-color: #005f73;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0a9396;
+    }
+    .info {
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <main>
-    <h2>👤 欢迎来到会员专区</h2>
-    <p>这是只有登录用户才能看到的内容。</p>
-    <button onclick="logout()">登出</button>
-  </main>
-<div style="text-align: center; margin: 40px 0;">
-  <a href="index.html" style="
-    background-color: #005f73;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 6px;
-    font-size: 16px;
-    text-decoration: none;
-  ">🏠 回到首页 / Back to Home</a>
-</div>
+  <h2>👤 会员资料 / Member Profile</h2>
+  <div class="info">
+    <p><strong>登录帐号：</strong><span id="userEmail">加载中...</span></p>
+  </div>
+  <form id="profileForm">
+    <label for="memberName">姓名 / Name</label>
+    <input type="text" id="memberName" placeholder="请输入您的姓名">
+
+    <label for="memberCourse">课程 / Course</label>
+    <select id="memberCourse">
+      <option value="">请选择课程</option>
+      <option value="儿童班">儿童班</option>
+      <option value="青少年班">青少年班</option>
+      <option value="成人班">成人班</option>
+    </select>
+
+    <button type="submit">💾 保存资料</button>
+  </form>
+
+  <div style="text-align:center; margin-top: 30px;">
+    <button onclick="logout()">🚪 登出</button>
+    <br><br>
+    <a href="index.html" style="color: #005f73;">🏠 回到首页</a>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script src="auth.js"></script>
 </body>
 </html>
