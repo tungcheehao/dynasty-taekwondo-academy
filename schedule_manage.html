@@ -2,149 +2,168 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>课程时间表管理 - Dynasty Taekwondo</title>
+  <title>课程时间表管理 / Manage Schedule - Dynasty Taekwondo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f2f2;
       padding: 20px;
-      background-color: #f4f9f9;
-      color: #222;
     }
     h2 {
       text-align: center;
       color: #003049;
+      margin-bottom: 20px;
     }
     table {
       width: 100%;
+      max-width: 1000px;
+      margin: auto;
       border-collapse: collapse;
-      margin: 20px auto;
-      background: white;
+      background-color: #fff;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     th, td {
+      padding: 12px;
       border: 1px solid #ccc;
-      padding: 10px;
       text-align: center;
     }
     th {
-      background-color: #005f73;
+      background-color: #118ab2;
       color: white;
     }
-    input, select, button {
-      padding: 8px;
-      margin: 5px;
+    input {
+      width: 100%;
+      padding: 6px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
     }
-    .add-form {
-      text-align: center;
-      margin-top: 30px;
-    }
-    .delete-btn {
-      background-color: #e63946;
-      color: white;
-      border: none;
+    button {
       padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .delete-btn:hover {
-      background-color: #b02a37;
-    }
-    .add-btn {
       background-color: #005f73;
       color: white;
       border: none;
-      padding: 8px 16px;
       border-radius: 4px;
       cursor: pointer;
     }
-    .add-btn:hover {
+    button:hover {
       background-color: #0a9396;
+    }
+    .center {
+      text-align: center;
+      margin: 20px auto;
+      max-width: 1000px;
     }
   </style>
 </head>
 <body>
-  <h2>🕒 课程时间表管理 / Schedule Management</h2>
 
-  <table id="scheduleTable">
+  <h2>📅 课程时间表管理 / Manage Class Schedule</h2>
+
+  <div class="center">
+    <h4>新增时间表 Add New Schedule</h4>
+    <input type="text" id="location" placeholder="道馆 / Location">
+    <input type="text" id="day" placeholder="星期 / Day">
+    <input type="text" id="time" placeholder="时间 / Time">
+    <button onclick="addSchedule()">添加 Add</button>
+  </div>
+
+  <table>
     <thead>
       <tr>
-        <th>道馆 / Dojang</th>
-        <th>星期 / Day</th>
-        <th>时间 / Time</th>
-        <th>操作 / Action</th>
+        <th>道馆 Location</th>
+        <th>星期 Day</th>
+        <th>时间 Time</th>
+        <th>操作 Action</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- 动态生成 -->
+    <tbody id="scheduleBody">
+      <tr><td colspan="4">加载中 / Loading...</td></tr>
     </tbody>
   </table>
 
-  <div class="add-form">
-    <h3>➕ 新增时间表</h3>
-    <select id="dojang">
-      <option value="BOTANI">BOTANI</option>
-      <option value="TOW BOO KEONG">TOW BOO KEONG</option>
-    </select>
-    <select id="day">
-      <option value="Monday">星期一</option>
-      <option value="Tuesday">星期二</option>
-      <option value="Wednesday">星期三</option>
-      <option value="Thursday">星期四</option>
-      <option value="Friday">星期五</option>
-      <option value="Saturday">星期六</option>
-      <option value="Sunday">星期日</option>
-    </select>
-    <input type="text" id="time" placeholder="如 7:30PM - 9:00PM">
-    <button class="add-btn" onclick="addSchedule()">新增</button>
+  <div class="center">
+    <a href="admin.html" class="btn">⬅️ 返回管理员面板 / Back to Admin Panel</a>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-  <script src="auth.js"></script>
   <script>
+    const firebaseConfig = {
+      // 🔐 请在此处填写你的 Firebase 配置
+    };
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const tableBody = document.querySelector("#scheduleTable tbody");
+    const auth = firebase.auth();
+
+    const scheduleBody = document.getElementById("scheduleBody");
 
     function loadSchedule() {
-      tableBody.innerHTML = "";
-      db.collection("schedules").orderBy("dojang").get().then(snapshot => {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${data.dojang}</td>
-            <td>${data.day}</td>
-            <td>${data.time}</td>
-            <td><button class="delete-btn" onclick="deleteSchedule('${doc.id}')">删除</button></td>
-          `;
-          tableBody.appendChild(row);
+      db.collection("schedule").orderBy("location").get()
+        .then(snapshot => {
+          scheduleBody.innerHTML = "";
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${data.location}</td>
+              <td>${data.day}</td>
+              <td>${data.time}</td>
+              <td><button onclick="deleteSchedule('${doc.id}')">删除 Delete</button></td>
+            `;
+            scheduleBody.appendChild(row);
+          });
+
+          if (scheduleBody.innerHTML === "") {
+            scheduleBody.innerHTML = "<tr><td colspan='4'>暂无记录 / No records found</td></tr>";
+          }
         });
-      });
     }
 
     function addSchedule() {
-      const dojang = document.getElementById("dojang").value;
-      const day = document.getElementById("day").value;
+      const location = document.getElementById("location").value.trim();
+      const day = document.getElementById("day").value.trim();
       const time = document.getElementById("time").value.trim();
-      if (time === "") return alert("请输入时间");
 
-      db.collection("schedules").add({ dojang, day, time })
-        .then(() => {
-          document.getElementById("time").value = "";
-          loadSchedule();
-        });
+      if (!location || !day || !time) {
+        alert("请填写所有字段 / Please fill all fields.");
+        return;
+      }
+
+      db.collection("schedule").add({
+        location,
+        day,
+        time
+      }).then(() => {
+        alert("时间表已添加！");
+        document.getElementById("location").value = "";
+        document.getElementById("day").value = "";
+        document.getElementById("time").value = "";
+        loadSchedule();
+      });
     }
 
     function deleteSchedule(id) {
-      if (confirm("确定要删除这条时间吗？")) {
-        db.collection("schedules").doc(id).delete().then(loadSchedule);
+      if (confirm("确认删除这项时间表？")) {
+        db.collection("schedule").doc(id).delete()
+          .then(() => {
+            alert("已删除！");
+            loadSchedule();
+          });
       }
     }
 
-    loadSchedule();
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert("请先登录");
+        window.location.href = "login_register.html";
+      } else {
+        loadSchedule();
+      }
+    });
   </script>
 </body>
 </html>
