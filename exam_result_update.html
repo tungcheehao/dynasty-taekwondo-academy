@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>考试成绩管理 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      padding: 30px;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background-color: #a2d5f2;
+    }
+    select, input {
+      padding: 6px;
+      font-size: 14px;
+    }
+    button {
+      padding: 6px 12px;
+      font-size: 13px;
+      margin: 2px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .save-btn {
+      background-color: #005f73;
+      color: white;
+    }
+    .delete-btn {
+      background-color: #d00000;
+      color: white;
+    }
+    .save-btn:hover {
+      background-color: #0a9396;
+    }
+    .delete-btn:hover {
+      background-color: #ef233c;
+    }
+    .back {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .back a {
+      text-decoration: none;
+      color: #005f73;
+    }
+  </style>
+</head>
+<body>
+  <h2>📑 考试成绩管理</h2>
+  <table id="examTable">
+    <thead>
+      <tr>
+        <th>学生姓名</th>
+        <th>IC</th>
+        <th>项目</th>
+        <th>考试名称</th>
+        <th>日期</th>
+        <th>成绩</th>
+        <th>考官</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="back">
+    <a href="admin.html">🔙 返回后台</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const tableBody = document.querySelector("#examTable tbody");
+
+    function loadExams() {
+      db.collection("event_registrations").orderBy("eventDate", "desc").get().then(snapshot => {
+        tableBody.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const id = doc.id;
+          if (data.eventType !== "考试 / Exam") return;
+
+          const result = data.result || "";
+          const examiner = data.examiner || "";
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
+            <td>${data.name}</td>
+            <td>${data.ic}</td>
+            <td>${data.eventType}</td>
+            <td>${data.eventTitle}</td>
+            <td>${data.eventDate}</td>
+            <td>
+              <select id="result-${id}">
+                <option value="">请选择</option>
+                <option value="Pass" ${result === "Pass" ? "selected" : ""}>Pass</option>
+                <option value="Fail" ${result === "Fail" ? "selected" : ""}>Fail</option>
+                <option value="No Show" ${result === "No Show" ? "selected" : ""}>No Show</option>
+              </select>
+            </td>
+            <td><input type="text" id="examiner-${id}" value="${examiner}" placeholder="Examiner Name"></td>
+            <td>
+              <button class="save-btn" onclick="saveResult('${id}')">保存</button>
+              <button class="delete-btn" onclick="deleteRecord('${id}')">删除</button>
+            </td>
+          `;
+          tableBody.appendChild(tr);
+        });
+      });
+    }
+
+    function saveResult(id) {
+      const result = document.getElementById(`result-${id}`).value;
+      const examiner = document.getElementById(`examiner-${id}`).value.trim();
+      db.collection("event_registrations").doc(id).update({
+        result: result,
+        examiner: examiner
+      }).then(() => {
+        alert("✅ 成绩已更新！");
+      }).catch(err => {
+        alert("❌ 错误：" + err.message);
+      });
+    }
+
+    function deleteRecord(id) {
+      if (!confirm("确定要删除该报名记录？")) return;
+      db.collection("event_registrations").doc(id).delete().then(() => {
+        alert("✅ 已删除");
+        loadExams();
+      });
+    }
+
+    loadExams();
+  </script>
+</body>
+</html>
