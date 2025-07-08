@@ -2,31 +2,35 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>🛡️ 数据备份与恢复 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>数据库备份 - Database Backup | Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f7f9fa;
+      background-color: #f0f0f0;
       padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     h2 {
       text-align: center;
       color: #003049;
     }
-    .section {
-      background-color: #fff;
-      padding: 20px;
-      max-width: 800px;
-      margin: 20px auto;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    p {
+      text-align: center;
+      margin-top: 10px;
     }
     button {
-      display: inline-block;
-      margin: 10px 5px;
-      padding: 12px 20px;
+      display: block;
+      margin: 20px auto;
+      padding: 12px 24px;
       background-color: #005f73;
       color: white;
       border: none;
@@ -37,115 +41,66 @@
     button:hover {
       background-color: #0a9396;
     }
-    .log {
-      background: #eef;
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+      margin-top: 20px;
+    }
+    li {
+      background: #e7f5ff;
       padding: 10px;
-      font-size: 14px;
-      border-radius: 6px;
-      margin-top: 15px;
+      margin: 5px 0;
+      border-radius: 5px;
+      font-family: monospace;
     }
   </style>
 </head>
 <body>
-  <h2>🛡️ 数据库备份与恢复<br>Database Backup & Restore</h2>
+  <div class="container">
+    <h2>📦 数据库备份 / Firestore Backup</h2>
+    <p>点选下方按钮手动导出当前数据库内容备份为 JSON。</p>
 
-  <div class="section">
-    <h3>📥 导出所有数据</h3>
-    <p>您可以导出整个数据库为 JSON 格式档案，以便储存或迁移。</p>
-    <button onclick="exportData()">📤 导出数据库</button>
-  </div>
+    <button onclick="downloadBackup()">📥 备份 Firestore 数据库</button>
 
-  <div class="section">
-    <h3>📤 导入备份文件</h3>
-    <p>从已备份的 JSON 文件还原数据。⚠️ 注意：此操作将覆盖现有数据。</p>
-    <input type="file" id="backupFile">
-    <button onclick="importData()">📥 导入并还原</button>
-  </div>
-
-  <div class="section">
-    <h3>🕓 最近操作记录 / Recent Logs</h3>
-    <div id="logList" class="log">加载中...</div>
+    <h3>🕒 最近备份记录 / Recent Backups</h3>
+    <ul id="backupList">
+      <li>每日凌晨 2 点自动备份（自动触发于 Firebase Functions）</li>
+      <li>手动备份记录将列在此处（开发中）</li>
+    </ul>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 项目配置
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const auth = firebase.auth();
 
-    auth.onAuthStateChanged(async user => {
-      if (!user || user.email !== "admin@dynastytkd.com") {
-        alert("仅主管理员可访问数据库页面");
-        window.location.href = "login_register.html";
-      } else {
-        loadLogs();
-      }
-    });
+    async function downloadBackup() {
+      try {
+        const collections = ["students", "users", "exams", "competitions", "finance", "shop_orders"];
+        const backupData = {};
 
-    async function exportData() {
-      const collections = ["students", "exams", "finance_records", "competition_results"];
-      const exportData = {};
-
-      for (const col of collections) {
-        const snapshot = await db.collection(col).get();
-        exportData[col] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      }
-
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `dynastytkd_backup_${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-
-      await log("数据库已导出");
-    }
-
-    async function importData() {
-      const file = document.getElementById("backupFile").files[0];
-      if (!file) return alert("请选择 JSON 备份文件");
-      const text = await file.text();
-      const data = JSON.parse(text);
-
-      for (const [col, items] of Object.entries(data)) {
-        for (const item of items) {
-          const { id, ...rest } = item;
-          await db.collection(col).doc(id).set(rest);
+        for (let col of collections) {
+          const snapshot = await db.collection(col).get();
+          backupData[col] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
         }
+
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `firebase_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("备份失败：" + err.message);
       }
-
-      alert("数据库还原成功！");
-      await log("数据库已还原");
-    }
-
-    async function log(action) {
-      const user = auth.currentUser;
-      await db.collection("logs").add({
-        action,
-        by: user.email,
-        time: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-
-    function loadLogs() {
-      db.collection("logs").orderBy("time", "desc").limit(5).onSnapshot(snapshot => {
-        const logDiv = document.getElementById("logList");
-        logDiv.innerHTML = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const date = data.time?.toDate().toLocaleString() || "(无时间)";
-          logDiv.innerHTML += `📌 ${data.action} by ${data.by} at ${date}<br>`;
-        });
-      });
     }
   </script>
 </body>
