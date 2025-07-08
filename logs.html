@@ -2,135 +2,114 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>📋 操作日志记录 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>操作记录 / Activity Logs - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f9f9;
+      background-color: #f4f4f4;
       padding: 20px;
-      color: #333;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     h2 {
       text-align: center;
       color: #003049;
     }
-    .log-container {
-      max-width: 1000px;
-      margin: 30px auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
     }
-    .log-entry {
-      border-bottom: 1px solid #ddd;
-      padding: 10px 0;
-      font-size: 15px;
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
     }
-    .log-entry:last-child {
-      border-bottom: none;
+    th {
+      background-color: #caf0f8;
     }
-    .log-entry strong {
-      color: #005f73;
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
     }
-    .filter-bar {
-      margin-bottom: 20px;
+    .filter {
+      margin: 20px 0;
       text-align: right;
     }
-    select {
-      padding: 6px 10px;
-      font-size: 14px;
+    .filter input {
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
 <body>
-  <h2>📋 系统操作日志<br>System Logs</h2>
+  <div class="container">
+    <h2>📋 操作记录 / Site Activity Logs</h2>
 
-  <div class="log-container">
-    <div class="filter-bar">
-      <label for="userFilter">筛选用户：</label>
-      <select id="userFilter" onchange="filterLogs()">
-        <option value="all">全部用户</option>
-      </select>
+    <div class="filter">
+      🔍 筛选关键词 / Filter keyword: <input type="text" id="logFilter" oninput="filterLogs()">
     </div>
 
-    <div id="logList">加载日志中...</div>
+    <table id="logTable">
+      <thead>
+        <tr>
+          <th>时间 / Timestamp</th>
+          <th>用户 / User</th>
+          <th>动作 / Action</th>
+          <th>页面 / Page</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 日志数据将自动填充 -->
+      </tbody>
+    </table>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 配置
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const auth = firebase.auth();
-
-    let logsData = [];
-
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        alert("请先登录");
-        location.href = "login_register.html";
-        return;
-      }
-
-      loadLogs();
-    });
 
     function loadLogs() {
-      db.collection("logs").orderBy("time", "desc").limit(100).get().then(snapshot => {
-        logsData = snapshot.docs.map(doc => doc.data());
-        populateUserFilter(logsData);
-        displayLogs(logsData);
-      });
-    }
-
-    function populateUserFilter(data) {
-      const users = new Set(data.map(log => log.by));
-      const filter = document.getElementById("userFilter");
-      users.forEach(user => {
-        const opt = document.createElement("option");
-        opt.value = user;
-        opt.textContent = user;
-        filter.appendChild(opt);
-      });
-    }
-
-    function displayLogs(data) {
-      const container = document.getElementById("logList");
-      container.innerHTML = "";
-      if (data.length === 0) {
-        container.innerHTML = "⚠️ 暂无日志记录。";
-        return;
-      }
-
-      data.forEach(log => {
-        const timeStr = log.time?.toDate().toLocaleString() || "(无时间)";
-        container.innerHTML += `
-          <div class="log-entry">
-            🕒 <strong>${timeStr}</strong><br>
-            👤 <strong>${log.by}</strong> 执行了操作：<br>
-            🔧 <em>${log.action}</em>
-          </div>
-        `;
-      });
+      const tbody = document.getElementById("logTable").getElementsByTagName("tbody")[0];
+      tbody.innerHTML = "";
+      db.collection("logs").orderBy("timestamp", "desc").limit(100).get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            const log = doc.data();
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${log.timestamp?.toDate().toLocaleString()}</td>
+              <td>${log.user || "匿名"}</td>
+              <td>${log.action}</td>
+              <td>${log.page}</td>`;
+            tbody.appendChild(row);
+          });
+        });
     }
 
     function filterLogs() {
-      const selected = document.getElementById("userFilter").value;
-      const filtered = selected === "all" ? logsData : logsData.filter(log => log.by === selected);
-      displayLogs(filtered);
+      const input = document.getElementById("logFilter").value.toLowerCase();
+      const rows = document.querySelectorAll("#logTable tbody tr");
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+      });
     }
+
+    window.onload = loadLogs;
   </script>
 </body>
 </html>
