@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>我的比赛成绩 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    table {
+      width: 100%;
+      max-width: 900px;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+      font-size: 15px;
+    }
+    th {
+      background-color: #fcd5ce;
+    }
+    .note {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      margin-top: 20px;
+    }
+    .total-score {
+      text-align: center;
+      font-size: 16px;
+      margin-top: 20px;
+      color: #003049;
+      font-weight: bold;
+    }
+    .back {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .back a {
+      color: #005f73;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>🏆 我的比赛成绩<br>My Competition Records</h2>
+
+  <div id="userEmail" class="note">加载中...</div>
+
+  <table id="competitionTable">
+    <thead>
+      <tr>
+        <th>比赛名称</th>
+        <th>日期</th>
+        <th>项目</th>
+        <th>奖项</th>
+        <th>积分</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="total-score" id="totalScore">总积分：0</div>
+
+  <div class="back">
+    <a href="student_zone.html">🔙 返回学生专区</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const tableBody = document.querySelector("#competitionTable tbody");
+    const userEmailDisplay = document.getElementById("userEmail");
+    const totalScoreDisplay = document.getElementById("totalScore");
+
+    const levelPoints = {
+      "国际赛事": 10,
+      "全国赛事": 8,
+      "全州赛事": 6,
+      "邀请赛": 4
+    };
+
+    const medalPoints = {
+      "金牌": { 国际赛事: 8, 全国赛事: 7, 全州赛事: 6, 邀请赛: 3 },
+      "银牌": { 国际赛事: 6, 全国赛事: 5, 全州赛事: 4, 邀请赛: 2 },
+      "铜牌": { 国际赛事: 4, 全国赛事: 3, 全州赛事: 2, 邀请赛: 1 }
+    };
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        userEmailDisplay.innerHTML = "当前登录：" + user.email;
+        db.collection("competition_results")
+          .where("email", "==", user.email)
+          .orderBy("eventDate", "desc")
+          .get()
+          .then(snapshot => {
+            tableBody.innerHTML = "";
+            let total = 0;
+            snapshot.forEach(doc => {
+              const d = doc.data();
+              const level = d.level || "";
+              const medal = d.medal || "";
+              const base = levelPoints[level] || 0;
+              const bonus = (medalPoints[medal] && medalPoints[medal][level]) || 0;
+              const score = base + bonus;
+              total += score;
+
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${d.eventTitle}</td>
+                <td>${d.eventDate}</td>
+                <td>${d.category}</td>
+                <td>${medal || "-"}</td>
+                <td>${score}</td>
+              `;
+              tableBody.appendChild(tr);
+            });
+            if (snapshot.empty) {
+              tableBody.innerHTML = `<tr><td colspan="5">无比赛记录 / No competition records found</td></tr>`;
+            }
+            totalScoreDisplay.innerHTML = `总积分：${total}`;
+          });
+      } else {
+        userEmailDisplay.innerHTML = "尚未登录 / Not logged in";
+        tableBody.innerHTML = `<tr><td colspan="5">请先登录查看您的比赛成绩</td></tr>`;
+      }
+    });
+  </script>
+</body>
+</html>
