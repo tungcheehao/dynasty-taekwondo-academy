@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>比赛成绩管理 - Admin | Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    form {
+      max-width: 700px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 15px;
+    }
+    button {
+      margin-top: 20px;
+      background-color: #005f73;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #0a9396;
+    }
+    .list-section {
+      max-width: 900px;
+      margin: 40px auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background-color: #fcd5ce;
+    }
+    .delete-btn {
+      background-color: #d62828;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background-color: #b91c1c;
+    }
+  </style>
+</head>
+<body>
+  <h2>🏆 比赛成绩记录 / Competition Result Entry</h2>
+
+  <form id="competitionForm">
+    <label for="email">学生邮箱 / Student Email</label>
+    <input type="email" id="email" required>
+
+    <label for="eventTitle">比赛名称 / Event Title</label>
+    <input type="text" id="eventTitle" required>
+
+    <label for="eventDate">日期 / Date</label>
+    <input type="date" id="eventDate" required>
+
+    <label for="category">比赛项目 / Category</label>
+    <select id="category" required>
+      <option value="">请选择项目</option>
+      <option value="品势 Poomsae">品势 Poomsae</option>
+      <option value="竞技 Kyorugi">竞技 Kyorugi</option>
+    </select>
+
+    <label for="level">赛事等级 / Level</label>
+    <select id="level" required>
+      <option value="">请选择等级</option>
+      <option value="国际赛事">国际赛事</option>
+      <option value="全国赛事">全国赛事</option>
+      <option value="全州赛事">全州赛事</option>
+      <option value="邀请赛">邀请赛</option>
+    </select>
+
+    <label for="medal">奖项 / Medal</label>
+    <select id="medal">
+      <option value="">无</option>
+      <option value="金牌">金牌</option>
+      <option value="银牌">银牌</option>
+      <option value="铜牌">铜牌</option>
+    </select>
+
+    <button type="submit">📥 记录成绩</button>
+  </form>
+
+  <div class="list-section">
+    <h3 style="text-align: center;">已记录的比赛成绩</h3>
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th>学生</th>
+          <th>比赛</th>
+          <th>日期</th>
+          <th>项目</th>
+          <th>等级</th>
+          <th>奖项</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const form = document.getElementById("competitionForm");
+    const tableBody = document.querySelector("#resultTable tbody");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const data = {
+        email: form.email.value.trim(),
+        eventTitle: form.eventTitle.value.trim(),
+        eventDate: form.eventDate.value,
+        category: form.category.value,
+        level: form.level.value,
+        medal: form.medal.value
+      };
+
+      await db.collection("competition_results").add(data);
+      form.reset();
+      loadData();
+    });
+
+    function loadData() {
+      tableBody.innerHTML = "";
+      db.collection("competition_results").orderBy("eventDate", "desc").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${d.email}</td>
+            <td>${d.eventTitle}</td>
+            <td>${d.eventDate}</td>
+            <td>${d.category}</td>
+            <td>${d.level}</td>
+            <td>${d.medal || "-"}</td>
+            <td><button class="delete-btn" onclick="deleteRecord('${doc.id}')">删除</button></td>
+          `;
+          tableBody.appendChild(tr);
+        });
+      });
+    }
+
+    function deleteRecord(id) {
+      if (confirm("确定要删除这条记录吗？")) {
+        db.collection("competition_results").doc(id).delete().then(() => {
+          loadData();
+        });
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
