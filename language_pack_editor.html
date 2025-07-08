@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>语言包编辑 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #005f73;
+      color: white;
+    }
+    textarea {
+      width: 100%;
+      height: 80px;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 10px;
+      background-color: #0a9396;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00787a;
+    }
+  </style>
+</head>
+<body>
+  <h2>🌐 语言包编辑 / Language Pack Editor</h2>
+  <table id="langTable">
+    <thead>
+      <tr>
+        <th>键值 / Key</th>
+        <th>简体中文</th>
+        <th>English</th>
+        <th>操作 / Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div style="text-align:center;">
+    <button onclick="addNewRow()">➕ 新增语言条目</button>
+    <button onclick="saveAll()">💾 保存全部</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const db = firebase.firestore();
+    const tableBody = document.querySelector("#langTable tbody");
+
+    function loadLangPack() {
+      tableBody.innerHTML = "";
+      db.collection("language_pack").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><input value="${doc.id}" disabled></td>
+            <td><textarea data-key="${doc.id}" data-lang="zh">${data.zh || ''}</textarea></td>
+            <td><textarea data-key="${doc.id}" data-lang="en">${data.en || ''}</textarea></td>
+            <td><button onclick="deleteRow('${doc.id}')">删除</button></td>
+          `;
+          tableBody.appendChild(row);
+        });
+      });
+    }
+
+    function addNewRow() {
+      const row = document.createElement("tr");
+      const newKey = "key_" + Date.now();
+      row.innerHTML = `
+        <td><input value="${newKey}"></td>
+        <td><textarea data-key="${newKey}" data-lang="zh"></textarea></td>
+        <td><textarea data-key="${newKey}" data-lang="en"></textarea></td>
+        <td><button onclick="this.parentElement.parentElement.remove()">移除</button></td>
+      `;
+      tableBody.appendChild(row);
+    }
+
+    function saveAll() {
+      const rows = tableBody.querySelectorAll("tr");
+      rows.forEach(row => {
+        const key = row.querySelector("td input").value;
+        const zh = row.querySelector('textarea[data-lang="zh"]').value;
+        const en = row.querySelector('textarea[data-lang="en"]').value;
+        db.collection("language_pack").doc(key).set({ zh, en });
+      });
+      alert("语言包已保存！");
+    }
+
+    function deleteRow(key) {
+      if (confirm("确认删除此语言条目？")) {
+        db.collection("language_pack").doc(key).delete().then(loadLangPack);
+      }
+    }
+
+    loadLangPack();
+  </script>
+</body>
+</html>
