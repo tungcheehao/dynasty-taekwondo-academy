@@ -1,127 +1,106 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <title>注册 / 登录 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>注册 / 登录 - Dynasty Taekwondo Academy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f0f4f8;
-      color: #222;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+    h2 {
       text-align: center;
-      padding: 40px 20px;
-    }
-    .tab-buttons {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .tab-buttons button {
-      padding: 10px 20px;
-      margin: 0 5px;
-      border: none;
-      background-color: #ccc;
-      cursor: pointer;
-    }
-    .tab-buttons .active {
-      background-color: #005f73;
-      color: white;
+      color: #003049;
     }
     form {
+      background-color: white;
       max-width: 400px;
-      margin: auto;
-      background-color: #fff;
+      margin: 20px auto;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
-    input, select {
+    input, select, button {
       width: 100%;
       padding: 10px;
-      margin: 10px 0;
+      margin-top: 10px;
+      margin-bottom: 10px;
       font-size: 16px;
       border: 1px solid #ccc;
       border-radius: 4px;
     }
-    button[type="submit"] {
-      background-color: #005f73;
+    button {
+      background-color: #0077b6;
       color: white;
-      padding: 12px;
-      width: 100%;
-      font-size: 16px;
       border: none;
-      border-radius: 4px;
       cursor: pointer;
     }
-    button[type="submit"]:hover {
-      background-color: #0a9396;
+    button:hover {
+      background-color: #0096c7;
     }
-    .link {
-      margin-top: 20px;
+    .toggle {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .form-title {
+      margin-bottom: 10px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h2>欢迎来到 Dynasty Taekwondo Academy</h2>
 
-  <div class="tab-buttons">
-    <button id="showLogin" class="active">🔐 登录</button>
-    <button id="showRegister">📝 注册</button>
-  </div>
+  <h2>🔐 登录 / 注册</h2>
 
   <!-- 登录表单 -->
   <form id="loginForm">
-    <input type="email" id="loginEmail" placeholder="电子邮箱 / Email" required />
-    <input type="password" id="loginPassword" placeholder="密码 / Password" required />
+    <div class="form-title">已有账号？请登录</div>
+    <input type="email" id="loginEmail" placeholder="📧 电邮 / Email" required>
+    <input type="password" id="loginPassword" placeholder="🔑 密码 / Password" required>
     <select id="loginRole" required>
-      <option value="">选择身份 / Select Role</option>
+      <option value="">👥 请选择身份 / Select Role</option>
       <option value="student">学生 / Student</option>
       <option value="admin">管理员 / Admin</option>
     </select>
-    <button type="submit">登录</button>
-    <div class="link">
-      <a href="reset.html">忘记密码？/ Forgot Password?</a>
-    </div>
+    <button type="submit">➡️ 登录 / Login</button>
   </form>
 
   <!-- 注册表单 -->
-  <form id="registerForm" style="display: none;">
-    <input type="email" id="registerEmail" placeholder="电子邮箱 / Email" required />
-    <input type="password" id="registerPassword" placeholder="密码 / Password" required />
+  <form id="registerForm">
+    <div class="form-title">没有账号？请注册</div>
+    <input type="email" id="registerEmail" placeholder="📧 电邮 / Email" required>
+    <input type="password" id="registerPassword" placeholder="🔑 密码 / Password" required>
     <select id="registerRole" required>
-      <option value="">选择身份 / Select Role</option>
+      <option value="">👥 请选择身份 / Select Role</option>
       <option value="student">学生 / Student</option>
       <option value="admin">管理员 / Admin</option>
     </select>
-    <button type="submit">注册</button>
+    <button type="submit">📝 注册 / Register</button>
   </form>
 
-  <script>
-    const loginForm = document.getElementById("loginForm");
-    const registerForm = document.getElementById("registerForm");
-    const showLogin = document.getElementById("showLogin");
-    const showRegister = document.getElementById("showRegister");
+  <!-- 忘记密码表单 -->
+  <form id="resetForm">
+    <div class="form-title">忘记密码？</div>
+    <input type="email" id="resetEmail" placeholder="📧 输入电邮以重设密码" required>
+    <button type="submit">🔁 重设密码</button>
+  </form>
 
-    showLogin.addEventListener("click", () => {
-      loginForm.style.display = "block";
-      registerForm.style.display = "none";
-      showLogin.classList.add("active");
-      showRegister.classList.remove("active");
-    });
+  <!-- 回首页按钮 -->
+  <div style="text-align: center; margin-top: 30px;">
+    <a href="index.html">🏠 回到首页 / Back to Home</a>
+  </div>
 
-    showRegister.addEventListener("click", () => {
-      loginForm.style.display = "none";
-      registerForm.style.display = "block";
-      showRegister.classList.add("active");
-      showLogin.classList.remove("active");
-    });
-  </script>
-
+  <!-- Firebase 依赖 -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+
+  <!-- 自定义功能 -->
   <script src="auth.js"></script>
+
 </body>
 </html>
