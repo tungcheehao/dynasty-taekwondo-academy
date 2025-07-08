@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>教练日志 / 系统便笺 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f9f9;
+      padding: 20px;
+      color: #222;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    form {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: auto;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #005f73;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .log-list {
+      max-width: 900px;
+      margin: 40px auto;
+    }
+    .log-card {
+      background: white;
+      padding: 16px;
+      margin-bottom: 16px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .log-card h4 {
+      margin-top: 0;
+      color: #003049;
+    }
+    .log-image {
+      max-width: 100%;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+    .delete-btn {
+      background-color: #d62828;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      float: right;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>📒 管理员 / 教练日志 Admin Notes</h2>
+
+  <form id="noteForm">
+    <select id="category">
+      <option value="system">系统维护 / System</option>
+      <option value="teaching">教学观察 / Teaching</option>
+      <option value="event">活动记录 / Event</option>
+    </select>
+    <input type="text" id="noteTitle" placeholder="日志标题 / Title" required>
+    <textarea id="noteContent" rows="4" placeholder="日志内容 / Notes Content" required></textarea>
+    <input type="text" id="imageUrl" placeholder="图片链接（选填）/ Optional Image URL">
+    <button type="submit">➕ 添加日志</button>
+  </form>
+
+  <div class="log-list" id="notesList">
+    <!-- Logs will appear here -->
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const db = firebase.firestore();
+    const form = document.getElementById("noteForm");
+    const list = document.getElementById("notesList");
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const note = {
+        category: document.getElementById("category").value,
+        title: document.getElementById("noteTitle").value,
+        content: document.getElementById("noteContent").value,
+        imageUrl: document.getElementById("imageUrl").value,
+        createdAt: new Date(),
+        createdBy: firebase.auth().currentUser?.email || "匿名"
+      };
+      db.collection("admin_notes").add(note).then(() => {
+        form.reset();
+        loadNotes();
+      });
+    });
+
+    function loadNotes() {
+      list.innerHTML = "";
+      db.collection("admin_notes").orderBy("createdAt", "desc").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const note = doc.data();
+          const card = document.createElement("div");
+          card.className = "log-card";
+          card.innerHTML = `
+            <button class="delete-btn" onclick="deleteNote('${doc.id}')">删除</button>
+            <h4>${note.title}</h4>
+            <p><strong>类型：</strong>${note.category}</p>
+            <p>${note.content}</p>
+            ${note.imageUrl ? `<img class="log-image" src="${note.imageUrl}" alt="Note Image">` : ""}
+            <small>作者: ${note.createdBy || "未知"} | 日期: ${note.createdAt.toDate().toLocaleString()}</small>
+          `;
+          list.appendChild(card);
+        });
+      });
+    }
+
+    function deleteNote(id) {
+      if (confirm("确认删除此日志？")) {
+        db.collection("admin_notes").doc(id).delete().then(loadNotes);
+      }
+    }
+
+    loadNotes();
+  </script>
+</body>
+</html>
