@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>活动 / 考试报名 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 30px;
+      background-color: #f4f9f9;
+      color: #222;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    form {
+      max-width: 600px;
+      margin: auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #005f73;
+      color: white;
+      border: none;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0a9396;
+    }
+    .success {
+      margin-top: 20px;
+      color: green;
+      text-align: center;
+    }
+    .back {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .back a {
+      text-decoration: none;
+      color: #005f73;
+    }
+  </style>
+</head>
+<body>
+  <h2>📝 活动 / 考试报名</h2>
+  <form id="eventForm">
+    <label for="studentName">学生姓名 / Name</label>
+    <input type="text" id="studentName" required>
+
+    <label for="studentIC">身份证号码 / IC Number</label>
+    <input type="text" id="studentIC" required>
+
+    <label for="eventType">选择项目 / Event Type</label>
+    <select id="eventType" required>
+      <option value="">请选择</option>
+      <option value="考试 / Exam">考试 / Exam</option>
+      <option value="讲座 / Seminar">讲座 / Seminar</option>
+      <option value="训练营 / Training Camp">训练营 / Training Camp</option>
+      <option value="表演 / Performance">表演 / Performance</option>
+    </select>
+
+    <label for="eventTitle">活动名称 / Title</label>
+    <input type="text" id="eventTitle" placeholder="如：6月晋级考试、品势讲座等" required>
+
+    <label for="eventDate">活动日期 / Date</label>
+    <input type="date" id="eventDate" required>
+
+    <label for="remarks">备注 / Remarks</label>
+    <input type="text" id="remarks" placeholder="可选">
+
+    <button type="submit">提交报名</button>
+    <div class="success" id="successMsg"></div>
+  </form>
+
+  <div class="back">
+    <a href="index.html">🏠 回首页 / Back to Home</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696",
+      measurementId: "G-NV2HLC2PMC"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.getElementById("eventForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const data = {
+        name: document.getElementById("studentName").value.trim(),
+        ic: document.getElementById("studentIC").value.trim(),
+        eventType: document.getElementById("eventType").value,
+        eventTitle: document.getElementById("eventTitle").value.trim(),
+        eventDate: document.getElementById("eventDate").value,
+        remarks: document.getElementById("remarks").value.trim(),
+        createdAt: new Date()
+      };
+
+      db.collection("event_registrations").add(data)
+        .then(() => {
+          document.getElementById("successMsg").textContent = "✅ 报名成功！";
+          document.getElementById("eventForm").reset();
+        })
+        .catch(err => {
+          document.getElementById("successMsg").textContent = "⚠️ 提交失败：" + err.message;
+        });
+    });
+  </script>
+</body>
+</html>
