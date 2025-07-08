@@ -1,132 +1,133 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>首页内容管理 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f9f9;
       padding: 20px;
-      color: #222;
+      background-color: #f2f2f2;
     }
     h2 {
       text-align: center;
       color: #003049;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
+    }
+    form {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     label {
       font-weight: bold;
+      display: block;
+      margin-top: 12px;
     }
-    textarea, input[type="text"] {
+    input, textarea {
       width: 100%;
       padding: 10px;
-      margin-top: 8px;
-      margin-bottom: 20px;
+      margin-top: 5px;
+      margin-bottom: 10px;
       border-radius: 4px;
       border: 1px solid #ccc;
-      font-size: 16px;
+      font-size: 15px;
     }
     button {
       background-color: #005f73;
       color: white;
-      padding: 10px 20px;
+      padding: 12px;
       border: none;
       border-radius: 6px;
-      cursor: pointer;
       font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
     }
     button:hover {
       background-color: #0a9396;
     }
-    .preview {
-      background-color: white;
-      padding: 20px;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-top: 40px;
-    }
-    .preview h3 {
-      margin-top: 0;
-      color: #003049;
+    .back {
+      text-align: center;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <h2>🖥️ 首页内容编辑 / Homepage Editor</h2>
 
-  <form id="editorForm">
-    <label for="mainTitle">首页标题 / Main Title</label>
-    <input type="text" id="mainTitle" placeholder="例如：欢迎来到 Dynasty Taekwondo">
+  <h2>🏠 首页内容编辑 / Homepage Editor</h2>
 
-    <label for="mainDescription">简介 / Description</label>
-    <textarea id="mainDescription" rows="4" placeholder="写下您的介绍文字..."></textarea>
+  <form id="homepageForm">
+    <label>标题 / Title</label>
+    <input type="text" id="homeTitle" required>
 
-    <label for="announcement">公告 / Announcement</label>
-    <textarea id="announcement" rows="3" placeholder="输入最新公告..."></textarea>
+    <label>欢迎信息 / Welcome Message</label>
+    <textarea id="homeWelcome" rows="4"></textarea>
 
-    <label for="bannerImage">Banner 图片链接 / Banner Image URL</label>
-    <input type="text" id="bannerImage" placeholder="例如：https://.../banner.jpg">
+    <label>简介 / Introduction</label>
+    <textarea id="homeIntro" rows="6"></textarea>
 
-    <label for="videoLink">影片链接（可选）/ YouTube Video Embed URL</label>
-    <input type="text" id="videoLink" placeholder="例如：https://www.youtube.com/embed/...">
+    <label>封面图片链接 / Cover Image URL</label>
+    <input type="text" id="homeImage">
 
-    <button type="submit">💾 保存并预览</button>
+    <button type="submit">💾 保存更新 / Save Updates</button>
   </form>
 
-  <div class="preview" id="previewBlock" style="display:none;">
-    <h3>📋 预览 Preview</h3>
-    <p><strong>标题:</strong> <span id="previewTitle"></span></p>
-    <p><strong>简介:</strong> <span id="previewDesc"></span></p>
-    <p><strong>公告:</strong> <span id="previewAnnounce"></span></p>
-    <p><strong>Banner 图:</strong><br><img id="previewImage" src="" alt="Banner" style="max-width:100%; margin-top:10px;"></p>
-    <p><strong>影片:</strong><br><iframe id="previewVideo" width="100%" height="300" style="margin-top:10px;" frameborder="0" allowfullscreen></iframe></p>
+  <div class="back">
+    <a href="admin.html" class="btn">⬅️ 返回管理员面板 / Back to Admin Panel</a>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-  <script src="auth.js"></script>
   <script>
+    const firebaseConfig = {
+      // 请填写你的 Firebase 配置
+    };
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const form = document.getElementById("editorForm");
+    const auth = firebase.auth();
 
-    function loadHomepageContent() {
-      db.collection("website").doc("homepage").get().then(doc => {
+    const form = document.getElementById("homepageForm");
+
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert("请先登录！");
+        window.location.href = "login_register.html";
+        return;
+      }
+      loadHomepageData();
+    });
+
+    function loadHomepageData() {
+      db.collection("site_content").doc("homepage").get().then(doc => {
         if (doc.exists) {
           const data = doc.data();
-          document.getElementById("mainTitle").value = data.title || "";
-          document.getElementById("mainDescription").value = data.description || "";
-          document.getElementById("announcement").value = data.announcement || "";
-          document.getElementById("bannerImage").value = data.banner || "";
-          document.getElementById("videoLink").value = data.video || "";
+          document.getElementById("homeTitle").value = data.title || "";
+          document.getElementById("homeWelcome").value = data.welcome || "";
+          document.getElementById("homeIntro").value = data.intro || "";
+          document.getElementById("homeImage").value = data.image || "";
         }
       });
     }
 
-    form.addEventListener("submit", e => {
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const title = document.getElementById("mainTitle").value;
-      const description = document.getElementById("mainDescription").value;
-      const announcement = document.getElementById("announcement").value;
-      const banner = document.getElementById("bannerImage").value;
-      const video = document.getElementById("videoLink").value;
-
-      db.collection("website").doc("homepage").set({
-        title, description, announcement, banner, video
-      }).then(() => {
-        document.getElementById("previewBlock").style.display = "block";
-        document.getElementById("previewTitle").innerText = title;
-        document.getElementById("previewDesc").innerText = description;
-        document.getElementById("previewAnnounce").innerText = announcement;
-        document.getElementById("previewImage").src = banner;
-        document.getElementById("previewVideo").src = video;
-        alert("保存成功！内容已更新。");
-      });
+      const data = {
+        title: document.getElementById("homeTitle").value,
+        welcome: document.getElementById("homeWelcome").value,
+        intro: document.getElementById("homeIntro").value,
+        image: document.getElementById("homeImage").value
+      };
+      db.collection("site_content").doc("homepage").set(data)
+        .then(() => alert("首页内容已更新！"));
     });
-
-    loadHomepageContent();
   </script>
+
 </body>
 </html>
