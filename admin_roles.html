@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>管理员权限管理 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #222;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin: 20px auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #005f73;
+      color: white;
+    }
+    select, input {
+      padding: 6px;
+      width: 90%;
+    }
+    button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .add-btn {
+      background-color: #0a9396;
+      color: white;
+      margin-top: 20px;
+    }
+    .delete-btn {
+      background-color: #e63946;
+      color: white;
+    }
+    .form-section {
+      max-width: 500px;
+      margin: auto;
+      text-align: center;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🛡️ 管理员角色管理 / Admin Role Management</h2>
+
+  <table id="adminTable">
+    <thead>
+      <tr>
+        <th>电邮 / Email</th>
+        <th>角色 / Role</th>
+        <th>操作 / Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="form-section">
+    <h3>➕ 新增管理员</h3>
+    <input type="email" id="newAdminEmail" placeholder="输入电邮">
+    <select id="newAdminRole">
+      <option value="superadmin">超级管理员</option>
+      <option value="coach">教练</option>
+      <option value="admin">普通管理员</option>
+    </select>
+    <br><br>
+    <button class="add-btn" onclick="addAdmin()">添加管理员</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const db = firebase.firestore();
+    const tableBody = document.querySelector("#adminTable tbody");
+
+    function loadAdmins() {
+      tableBody.innerHTML = "";
+      db.collection("admins").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${data.email}</td>
+            <td>
+              <select onchange="updateRole('${doc.id}', this.value)">
+                <option value="superadmin" ${data.role === "superadmin" ? "selected" : ""}>超级管理员</option>
+                <option value="coach" ${data.role === "coach" ? "selected" : ""}>教练</option>
+                <option value="admin" ${data.role === "admin" ? "selected" : ""}>普通管理员</option>
+              </select>
+            </td>
+            <td><button class="delete-btn" onclick="deleteAdmin('${doc.id}')">删除</button></td>
+          `;
+          tableBody.appendChild(row);
+        });
+      });
+    }
+
+    function addAdmin() {
+      const email = document.getElementById("newAdminEmail").value.trim();
+      const role = document.getElementById("newAdminRole").value;
+      if (!email) return alert("请输入管理员电邮");
+
+      db.collection("admins").add({ email, role }).then(() => {
+        document.getElementById("newAdminEmail").value = "";
+        loadAdmins();
+      });
+    }
+
+    function deleteAdmin(id) {
+      if (confirm("确定要删除该管理员？")) {
+        db.collection("admins").doc(id).delete().then(loadAdmins);
+      }
+    }
+
+    function updateRole(id, role) {
+      db.collection("admins").doc(id).update({ role }).then(() => {
+        console.log("角色已更新");
+      });
+    }
+
+    loadAdmins();
+  </script>
+</body>
+</html>
