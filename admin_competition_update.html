@@ -2,13 +2,13 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>比赛成绩管理 - Admin | Dynasty Taekwondo</title>
+  <title>比赛成绩管理 - Admin Competition Results</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f5f5f5;
+      background-color: #f2f2f2;
       padding: 20px;
     }
     h2 {
@@ -16,187 +16,130 @@
       color: #003049;
     }
     form {
-      max-width: 700px;
-      margin: 20px auto;
+      max-width: 600px;
+      margin: auto;
       background: white;
       padding: 20px;
-      border-radius: 6px;
+      border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     label {
-      display: block;
       margin-top: 10px;
+      display: block;
       font-weight: bold;
     }
-    input, select, button {
+    input, select {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
-      font-size: 15px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
     button {
-      margin-top: 20px;
       background-color: #005f73;
       color: white;
+      padding: 12px;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
     }
     button:hover {
       background-color: #0a9396;
     }
-    .list-section {
-      max-width: 900px;
-      margin: 40px auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
+    .message {
       text-align: center;
-      font-size: 14px;
-    }
-    th {
-      background-color: #fcd5ce;
-    }
-    .delete-btn {
-      background-color: #d62828;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .delete-btn:hover {
-      background-color: #b91c1c;
+      margin-top: 20px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h2>🏆 比赛成绩记录 / Competition Result Entry</h2>
-
+  <h2>🏆 比赛成绩管理 / Admin Competition Result Update</h2>
   <form id="competitionForm">
-    <label for="email">学生邮箱 / Student Email</label>
-    <input type="email" id="email" required>
+    <label for="competitionId">选择比赛 / Select Competition</label>
+    <select id="competitionId" required>
+      <option value="">-- 请选择 --</option>
+    </select>
 
-    <label for="eventTitle">比赛名称 / Event Title</label>
-    <input type="text" id="eventTitle" required>
+    <label for="studentName">学生姓名 / Student Name</label>
+    <input type="text" id="studentName" required>
 
-    <label for="eventDate">日期 / Date</label>
-    <input type="date" id="eventDate" required>
+    <label for="studentNric">身份证号 / NRIC</label>
+    <input type="text" id="studentNric" required>
 
-    <label for="category">比赛项目 / Category</label>
-    <select id="category" required>
+    <label for="category">项目 / Category</label>
+    <select id="category">
       <option value="">请选择项目</option>
-      <option value="品势 Poomsae">品势 Poomsae</option>
-      <option value="竞技 Kyorugi">竞技 Kyorugi</option>
+      <option value="Poomsae">品势 Poomsae</option>
+      <option value="Kyorugi">竞技 Kyorugi</option>
     </select>
 
-    <label for="level">赛事等级 / Level</label>
-    <select id="level" required>
-      <option value="">请选择等级</option>
-      <option value="国际赛事">国际赛事</option>
-      <option value="全国赛事">全国赛事</option>
-      <option value="全州赛事">全州赛事</option>
-      <option value="邀请赛">邀请赛</option>
-    </select>
-
-    <label for="medal">奖项 / Medal</label>
-    <select id="medal">
+    <label for="award">奖项 / Award</label>
+    <select id="award">
       <option value="">无</option>
-      <option value="金牌">金牌</option>
-      <option value="银牌">银牌</option>
-      <option value="铜牌">铜牌</option>
+      <option value="Gold">金牌 / Gold</option>
+      <option value="Silver">银牌 / Silver</option>
+      <option value="Bronze">铜牌 / Bronze</option>
     </select>
 
-    <button type="submit">📥 记录成绩</button>
+    <label for="score">得分 / Score</label>
+    <input type="number" id="score" min="0">
+
+    <button type="submit">💾 保存记录 / Save Result</button>
   </form>
 
-  <div class="list-section">
-    <h3 style="text-align: center;">已记录的比赛成绩</h3>
-    <table id="resultTable">
-      <thead>
-        <tr>
-          <th>学生</th>
-          <th>比赛</th>
-          <th>日期</th>
-          <th>项目</th>
-          <th>等级</th>
-          <th>奖项</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <div class="message" id="message"></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 在此处填入您的 Firebase 配置
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const form = document.getElementById("competitionForm");
-    const tableBody = document.querySelector("#resultTable tbody");
+    const message = document.getElementById("message");
+    const competitionId = document.getElementById("competitionId");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const data = {
-        email: form.email.value.trim(),
-        eventTitle: form.eventTitle.value.trim(),
-        eventDate: form.eventDate.value,
-        category: form.category.value,
-        level: form.level.value,
-        medal: form.medal.value
-      };
-
-      await db.collection("competition_results").add(data);
-      form.reset();
-      loadData();
-    });
-
-    function loadData() {
-      tableBody.innerHTML = "";
-      db.collection("competition_results").orderBy("eventDate", "desc").get().then(snapshot => {
+    function loadCompetitions() {
+      db.collection("events").where("type", "==", "competition").get().then(snapshot => {
         snapshot.forEach(doc => {
-          const d = doc.data();
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${d.email}</td>
-            <td>${d.eventTitle}</td>
-            <td>${d.eventDate}</td>
-            <td>${d.category}</td>
-            <td>${d.level}</td>
-            <td>${d.medal || "-"}</td>
-            <td><button class="delete-btn" onclick="deleteRecord('${doc.id}')">删除</button></td>
-          `;
-          tableBody.appendChild(tr);
+          const data = doc.data();
+          const opt = document.createElement("option");
+          opt.value = doc.id;
+          opt.textContent = `${data.title} (${data.date})`;
+          competitionId.appendChild(opt);
         });
       });
     }
 
-    function deleteRecord(id) {
-      if (confirm("确定要删除这条记录吗？")) {
-        db.collection("competition_results").doc(id).delete().then(() => {
-          loadData();
-        });
-      }
-    }
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
 
-    loadData();
+      const data = {
+        competitionId: competitionId.value,
+        studentName: document.getElementById("studentName").value,
+        studentNric: document.getElementById("studentNric").value,
+        category: document.getElementById("category").value,
+        award: document.getElementById("award").value,
+        score: Number(document.getElementById("score").value) || 0,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      db.collection("competition_results").add(data).then(() => {
+        message.textContent = "✅ 成绩已保存 / Result saved.";
+        form.reset();
+      }).catch(error => {
+        message.textContent = "❌ 错误：" + error.message;
+      });
+    });
+
+    loadCompetitions();
   </script>
 </body>
 </html>
