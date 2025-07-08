@@ -1,0 +1,106 @@
+<!-- login_register.html -->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>注册 / 登录 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .form-toggle {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .form-toggle button {
+      margin: 0 10px;
+      padding: 8px 16px;
+      font-size: 16px;
+      border: none;
+      background-color: #005f73;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .form-toggle button.active {
+      background-color: #0a9396;
+    }
+    .form-section {
+      display: none;
+    }
+    .form-section.active {
+      display: block;
+    }
+    input {
+      width: 90%;
+      max-width: 300px;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    button.submit {
+      width: 90%;
+      max-width: 320px;
+      background-color: #005f73;
+      color: white;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>📝 注册 / 登录</h2>
+  <div class="form-toggle">
+    <button id="toggleRegister" class="active">注册</button>
+    <button id="toggleLogin">登录</button>
+  </div>
+  
+  <div id="registerSection" class="form-section active">
+    <form id="registerForm">
+      <input type="email" id="registerEmail" placeholder="电子邮箱" required><br>
+      <input type="password" id="registerPassword" placeholder="密码" required><br>
+      <button type="submit" class="submit">注册</button>
+    </form>
+    <p>已有账号？点击“登录”</p>
+  </div>
+
+  <div id="loginSection" class="form-section">
+    <form id="loginForm">
+      <input type="email" id="loginEmail" placeholder="电子邮箱" required><br>
+      <input type="password" id="loginPassword" placeholder="密码" required><br>
+      <button type="submit" class="submit">登录</button>
+    </form>
+    <p><a href="forgot.html">忘记密码？</a></p>
+  </div>
+
+  <div style="text-align: center; margin-top: 30px;">
+    <a href="index.html" class="btn">🏠 回到首页</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const toggleRegister = document.getElementById("toggleRegister");
+    const toggleLogin = document.getElementById("toggleLogin");
+    const registerSection = document.getElementById("registerSection");
+    const loginSection = document.getElementById("loginSection");
+
+    toggleRegister.addEventListener("click", () => {
+      registerSection.classList.add("active");
+      loginSection.classList.remove("active");
+      toggleRegister.classList.add("active");
+      toggleLogin.classList.remove("active");
+    });
+
+    toggleLogin.addEventListener("click", () => {
+      loginSection.classList.add("active");
+      registerSection.classList.remove("active");
+      toggleLogin.classList.add("active");
+      toggleRegister.classList.remove("active");
+    });
+  </script>
+</body>
+</html>
