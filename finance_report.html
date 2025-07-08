@@ -2,57 +2,50 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>📊 财务记录 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>财务报告 - Finance Report | Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #f5f5f5;
       padding: 20px;
-      color: #333;
     }
     h2 {
       text-align: center;
       color: #003049;
     }
-    .filter {
-      max-width: 800px;
-      margin: 20px auto;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    select, button {
-      padding: 10px;
-      font-size: 15px;
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     table {
       width: 100%;
-      max-width: 1000px;
-      margin: 30px auto;
       border-collapse: collapse;
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-top: 20px;
     }
     th, td {
-      padding: 12px;
+      padding: 10px;
       border: 1px solid #ccc;
       text-align: center;
     }
     th {
-      background-color: #a2d5f2;
+      background-color: #dbeafe;
+    }
+    select, button {
+      padding: 8px 12px;
+      margin: 10px 0;
+      font-size: 16px;
     }
     .export-btn {
-      display: block;
-      margin: 20px auto;
       background-color: #005f73;
       color: white;
-      padding: 10px 20px;
       border: none;
       border-radius: 6px;
-      font-size: 16px;
       cursor: pointer;
     }
     .export-btn:hover {
@@ -61,89 +54,106 @@
   </style>
 </head>
 <body>
-  <h2>📊 年度财务报告<br>Annual Finance Report</h2>
+  <h2>💰 财务报告 / Finance Report</h2>
 
-  <div class="filter">
-    <select id="yearSelect">
-      <option value="2025">2025</option>
-      <option value="2024">2024</option>
-      <option value="2023">2023</option>
-    </select>
-    <button onclick="loadFinance()">🔍 查询记录</button>
+  <div class="container">
+    <label for="yearSelect">选择年份 / Select Year:</label>
+    <select id="yearSelect"></select>
+    <button class="export-btn" onclick="exportToCSV()">📁 导出 CSV</button>
+
+    <table id="financeTable">
+      <thead>
+        <tr>
+          <th>学生姓名</th>
+          <th>身份证号</th>
+          <th>学费</th>
+          <th>报名费</th>
+          <th>比赛费</th>
+          <th>购物</th>
+          <th>年费</th>
+          <th>总计 (RM)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 动态生成 -->
+      </tbody>
+    </table>
   </div>
-
-  <table id="financeTable">
-    <thead>
-      <tr>
-        <th>学生姓名<br>Student Name</th>
-        <th>项目<br>Item</th>
-        <th>金额 (RM)</th>
-        <th>类别<br>Category</th>
-        <th>日期<br>Date</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- 财务记录将自动填充 -->
-    </tbody>
-  </table>
-
-  <button class="export-btn" onclick="exportToCSV()">📥 导出 Excel</button>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 配置
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    async function loadFinance() {
-      const year = document.getElementById("yearSelect").value;
-      const tbody = document.querySelector("#financeTable tbody");
-      tbody.innerHTML = "";
+    function generateYearOptions() {
+      const yearSelect = document.getElementById("yearSelect");
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= 2020; y--) {
+        const option = document.createElement("option");
+        option.value = y;
+        option.textContent = y;
+        yearSelect.appendChild(option);
+      }
+    }
 
-      const start = new Date(`${year}-01-01`);
-      const end = new Date(`${parseInt(year)+1}-01-01`);
+    function loadFinanceData(year) {
+      const tableBody = document.getElementById("financeTable").querySelector("tbody");
+      tableBody.innerHTML = "";
 
-      const snapshot = await db.collection("finance_records")
-        .where("date", ">=", start)
-        .where("date", "<", end)
-        .orderBy("date", "asc")
-        .get();
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${data.studentName}</td>
-          <td>${data.item}</td>
-          <td>${data.amount.toFixed(2)}</td>
-          <td>${data.category}</td>
-          <td>${new Date(data.date.seconds * 1000).toLocaleDateString()}</td>
-        `;
-        tbody.appendChild(row);
-      });
+      db.collection("finance")
+        .where("year", "==", year)
+        .get()
+        .then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const total = (data.tuition || 0) + (data.registration || 0) +
+                          (data.competition || 0) + (data.purchase || 0) +
+                          (data.membership || 0);
+            const row = `
+              <tr>
+                <td>${data.name || ""}</td>
+                <td>${data.nric || ""}</td>
+                <td>${data.tuition || 0}</td>
+                <td>${data.registration || 0}</td>
+                <td>${data.competition || 0}</td>
+                <td>${data.purchase || 0}</td>
+                <td>${data.membership || 0}</td>
+                <td><strong>${total}</strong></td>
+              </tr>
+            `;
+            tableBody.insertAdjacentHTML("beforeend", row);
+          });
+        });
     }
 
     function exportToCSV() {
-      let rows = [["学生姓名","项目","金额(RM)","类别","日期"]];
-      document.querySelectorAll("#financeTable tbody tr").forEach(tr => {
-        const cells = tr.querySelectorAll("td");
-        rows.push(Array.from(cells).map(td => td.textContent));
-      });
-      let csvContent = rows.map(e => e.join(",")).join("\n");
-      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const rows = [...document.querySelectorAll("table tr")];
+      const csvContent = rows.map(row => {
+        const cols = row.querySelectorAll("th, td");
+        return [...cols].map(col => `"${col.textContent}"`).join(",");
+      }).join("\n");
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "finance_report.csv";
+      link.download = `finance_report_${document.getElementById("yearSelect").value}.csv`;
       link.click();
     }
+
+    document.getElementById("yearSelect").addEventListener("change", function () {
+      loadFinanceData(parseInt(this.value));
+    });
+
+    window.onload = function () {
+      generateYearOptions();
+      const thisYear = new Date().getFullYear();
+      document.getElementById("yearSelect").value = thisYear;
+      loadFinanceData(thisYear);
+    };
   </script>
 </body>
 </html>
