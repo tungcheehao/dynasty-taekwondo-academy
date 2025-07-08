@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>📝 审计记录详情 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f9f9;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    h2 {
+      color: #003049;
+      text-align: center;
+    }
+    .detail-item {
+      margin: 12px 0;
+      font-size: 16px;
+    }
+    .detail-item strong {
+      display: inline-block;
+      width: 150px;
+      color: #005f73;
+    }
+    .back-link {
+      display: block;
+      margin: 30px auto 0;
+      width: fit-content;
+      padding: 10px 20px;
+      background-color: #005f73;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .back-link:hover {
+      background-color: #0a9396;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📝 审计记录详情<br>Audit Log Details</h2>
+    <div id="auditDetails">正在加载详细信息...</div>
+    <a class="back-link" href="audit_log.html">⬅️ 返回审计日志</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 假设 URL 是 audit_log_detail.html?id=xxxx
+    const urlParams = new URLSearchParams(window.location.search);
+    const auditId = urlParams.get('id');
+
+    if (!auditId) {
+      document.getElementById('auditDetails').innerText = '❌ 无效的日志 ID。';
+    } else {
+      db.collection("audit_logs").doc(auditId).get().then(doc => {
+        if (!doc.exists) {
+          document.getElementById('auditDetails').innerText = '❌ 记录不存在。';
+          return;
+        }
+        const data = doc.data();
+        const timeStr = data.time?.toDate().toLocaleString() || '(未知时间)';
+        const html = `
+          <div class="detail-item"><strong>操作时间：</strong> ${timeStr}</div>
+          <div class="detail-item"><strong>执行人：</strong> ${data.by}</div>
+          <div class="detail-item"><strong>操作类型：</strong> ${data.actionType}</div>
+          <div class="detail-item"><strong>对象（如学生）：</strong> ${data.target || 'N/A'}</div>
+          <div class="detail-item"><strong>原始数据：</strong><br> <pre>${JSON.stringify(data.oldData || {}, null, 2)}</pre></div>
+          <div class="detail-item"><strong>更改后数据：</strong><br> <pre>${JSON.stringify(data.newData || {}, null, 2)}</pre></div>
+          <div class="detail-item"><strong>备注说明：</strong><br> ${data.details || '(无)'}</div>
+        `;
+        document.getElementById('auditDetails').innerHTML = html;
+      }).catch(err => {
+        console.error(err);
+        document.getElementById('auditDetails').innerText = '⚠️ 加载失败。';
+      });
+    }
+  </script>
+</body>
+</html>
