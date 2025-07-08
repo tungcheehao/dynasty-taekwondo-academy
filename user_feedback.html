@@ -2,23 +2,22 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>📬 意见反馈 - Dynasty Taekwondo</title>
+  <title>意见反馈 / User Feedback - Dynasty Taekwondo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f9f9;
+      background-color: #f2f2f2;
       padding: 30px;
-      color: #333;
     }
     .container {
       max-width: 700px;
-      margin: 40px auto;
+      margin: auto;
       background-color: #fff;
       padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 0 10px rgba(0,0,0,0.08);
     }
     h2 {
       text-align: center;
@@ -26,103 +25,83 @@
     }
     label {
       font-weight: bold;
-      margin-top: 15px;
       display: block;
+      margin-top: 20px;
     }
-    textarea, input, select {
+    input, select, textarea {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
+      padding: 12px;
+      margin-top: 8px;
       border: 1px solid #ccc;
+      border-radius: 6px;
       font-size: 16px;
     }
     button {
       margin-top: 20px;
-      padding: 12px 24px;
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
       background-color: #005f73;
       color: white;
       border: none;
       border-radius: 6px;
-      font-size: 16px;
       cursor: pointer;
     }
     button:hover {
       background-color: #0a9396;
     }
-    .note {
-      font-size: 14px;
-      color: #666;
-      margin-top: 10px;
+    .message {
+      text-align: center;
+      color: green;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>📬 意见反馈 / Feedback</h2>
+    <h2>📬 意见反馈 / User Feedback</h2>
+
     <form id="feedbackForm">
-      <label for="category">反馈类型 / Category</label>
-      <select id="category" required>
-        <option value="">请选择</option>
-        <option value="网站功能">🌐 网站功能 Website</option>
-        <option value="教学课程">🥋 教学课程</option>
-        <option value="财务问题">💰 财务问题</option>
-        <option value="一般建议">📝 一般建议</option>
-        <option value="其他">🔧 其他 Other</option>
+      <label for="feedbackType">反馈类型 / Type</label>
+      <select id="feedbackType" required>
+        <option value="">请选择 / Select</option>
+        <option value="意见 / Suggestion">意见 / Suggestion</option>
+        <option value="问题 / Issue">问题 / Issue</option>
+        <option value="其他 / Other">其他 / Other</option>
       </select>
 
-      <label for="message">您的反馈 / Your Feedback</label>
-      <textarea id="message" rows="6" placeholder="请填写您的意见、建议或遇到的问题" required></textarea>
+      <label for="feedbackMessage">内容 / Message</label>
+      <textarea id="feedbackMessage" rows="5" required></textarea>
 
-      <button type="submit">✅ 提交反馈</button>
+      <button type="submit">提交 / Submit</button>
     </form>
-    <p class="note">⚠️ 管理员会查看您的反馈并在后台页面回应或处理。请保持电子邮箱开启以便联系。</p>
+
+    <div class="message" id="feedbackStatus"></div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 配置
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const auth = firebase.auth();
 
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        alert("请先登录后才能提交反馈。");
-        window.location.href = "login_register.html";
-      }
-    });
-
-    document.getElementById("feedbackForm").addEventListener("submit", function (e) {
+    document.getElementById("feedbackForm").addEventListener("submit", function(e) {
       e.preventDefault();
-      const category = document.getElementById("category").value;
-      const message = document.getElementById("message").value;
-      const user = auth.currentUser;
+      const type = document.getElementById("feedbackType").value;
+      const message = document.getElementById("feedbackMessage").value;
 
-      if (!user) return;
-
-      db.collection("feedback").add({
-        userId: user.uid,
-        userEmail: user.email,
-        category: category,
+      db.collection("feedbacks").add({
+        type: type,
         message: message,
-        createdAt: new Date(),
-        status: "未处理"
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
       }).then(() => {
-        alert("谢谢您的反馈！");
+        document.getElementById("feedbackStatus").innerText = "谢谢您的反馈 / Thank you for your feedback!";
         document.getElementById("feedbackForm").reset();
-      }).catch(error => {
-        console.error("提交失败", error);
-        alert("提交失败，请稍后再试。");
+      }).catch((error) => {
+        document.getElementById("feedbackStatus").innerText = "提交失败，请稍后重试 / Submission failed. Please try again.";
       });
     });
   </script>
