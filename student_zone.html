@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>学生专区 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    form {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #005f73;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #0a9396;
+    }
+  </style>
+</head>
+<body>
+  <h2>👤 学生专区 / Student Profile</h2>
+  <form id="studentProfileForm">
+    <label>姓名（中文） / Name (Chinese)</label>
+    <input type="text" id="nameCn" required>
+
+    <label>姓名（英文） / Name (English)</label>
+    <input type="text" id="nameEn" required>
+
+    <label>身份证号码 / NRIC</label>
+    <input type="text" id="nric" required>
+
+    <label>出生日期 / Date of Birth</label>
+    <input type="date" id="dob">
+
+    <label>性别 / Gender</label>
+    <select id="gender">
+      <option value="">请选择 / Select</option>
+      <option value="男 Male">男 Male</option>
+      <option value="女 Female">女 Female</option>
+    </select>
+
+    <label>年龄 / Age</label>
+    <input type="number" id="age">
+
+    <label>就读学校 / School</label>
+    <input type="text" id="school">
+
+    <label>住家地址 / Address</label>
+    <textarea id="address"></textarea>
+
+    <label>联络号码 / Contact Number</label>
+    <input type="text" id="phone">
+
+    <label>父母/监护人姓名 / Parent/Guardian Name</label>
+    <input type="text" id="parentName">
+
+    <label>父母/监护人身份证号 / Parent NRIC</label>
+    <input type="text" id="parentNric">
+
+    <label>父母/监护人电话 / Parent Phone</label>
+    <input type="text" id="parentPhone">
+
+    <label>所属教练 / Assigned Coach</label>
+    <input type="text" id="coach">
+
+    <label>入学日期 / Enrollment Date</label>
+    <input type="date" id="enrollDate">
+
+    <label>上传学生照片 / Upload Student Photo</label>
+    <input type="file" id="studentPhoto" accept="image/*">
+
+    <button type="submit">💾 保存资料 / Save Profile</button>
+  </form>
+
+  <div style="text-align:center; margin-top: 30px;">
+    <button onclick="logout()">🚪 登出 / Logout</button>
+    <br><br>
+    <a href="index.html">🏠 回首页 / Back to Home</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>
