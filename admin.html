@@ -2,85 +2,99 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>管理面板 - Dynasty Taekwondo</title>
+  <title>管理员面板 - Dynasty Taekwondo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
-    body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #f8f8f8; }
-    h2 { text-align: center; color: #003049; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    .search-bar {
+      max-width: 400px;
+      margin: 20px auto;
+      text-align: center;
+    }
+    .search-bar input {
+      width: 80%;
+      padding: 10px;
+      font-size: 16px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
-      background-color: #fff;
+      background: white;
     }
     th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
+      padding: 12px;
+      border: 1px solid #ccc;
       text-align: center;
+      font-size: 14px;
     }
     th {
+      background-color: #a2d5f2;
+    }
+    img.student-photo {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .export-button {
+      margin-top: 20px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
       background-color: #005f73;
       color: white;
-    }
-    input[type="search"] {
-      width: 100%;
-      max-width: 300px;
-      padding: 8px;
-      font-size: 16px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    .photo {
-      width: 50px;
-      height: 50px;
-      object-fit: cover;
-      border-radius: 4px;
-    }
-    .export-btn {
-      background-color: #003049;
-      color: white;
-      padding: 8px 16px;
       border: none;
-      border-radius: 5px;
-      margin-top: 10px;
+      border-radius: 6px;
       cursor: pointer;
     }
-    .export-btn:hover {
-      background-color: #005f73;
+    button:hover {
+      background-color: #0a9396;
     }
   </style>
 </head>
 <body>
-  <h2>👨‍🏫 管理员面板 / Admin Panel</h2>
-  <p style="text-align: center;">仅限授权管理员使用（例如：主教练、网站负责人）</p>
+  <h2>📋 学生管理面板 / Admin Panel</h2>
 
-  <div style="text-align: center;">
-    <input type="search" id="searchInput" placeholder="🔍 搜索姓名、身份证、学校等…">
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="🔍 输入姓名、IC 或学校搜索...">
   </div>
 
-  <div style="overflow-x: auto;">
-    <table id="studentTable">
-      <thead>
-        <tr>
-          <th>学生姓名</th>
-          <th>身份证</th>
-          <th>就读学校</th>
-          <th>联络电话</th>
-          <th>当前带级</th>
-          <th>照片</th>
-          <th>注册日期</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Firebase 载入数据 -->
-      </tbody>
-    </table>
+  <div class="export-button">
+    <button onclick="exportToCSV()">📁 导出学生资料 CSV</button>
   </div>
 
-  <div style="text-align: center;">
-    <button class="export-btn" onclick="exportCSV()">📤 导出 CSV</button>
+  <table id="studentTable">
+    <thead>
+      <tr>
+        <th>照片<br>Photo</th>
+        <th>姓名<br>Name</th>
+        <th>身份证<br>IC</th>
+        <th>学校<br>School</th>
+        <th>教练<br>Coach</th>
+        <th>入学日<br>Enrollment</th>
+        <th>操作<br>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="studentTableBody">
+      <!-- 自动填入学生数据 -->
+    </tbody>
+  </table>
+
+  <div style="text-align:center; margin-top: 30px;">
+    <button onclick="logout()">🚪 登出 / Logout</button>
+    <br><br>
+    <a href="index.html">🏠 回首页 / Back to Home</a>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
@@ -89,59 +103,69 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
   <script src="auth.js"></script>
   <script>
-    const adminEmails = ["admin@example.com", "coach@example.com"]; // 仅允许的管理员邮箱
+    const searchInput = document.getElementById("searchInput");
+    const tableBody = document.getElementById("studentTableBody");
 
-    firebase.auth().onAuthStateChanged((user) => {
-      if (!user || !adminEmails.includes(user.email)) {
-        alert("无权访问此页面");
-        window.location.href = "index.html";
-        return;
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        firebase.firestore().collection("users").doc(user.uid).get()
+          .then(doc => {
+            if (!doc.exists || doc.data().role !== "admin") {
+              alert("只有管理员可以访问本页面！");
+              window.location.href = "login_register.html";
+            } else {
+              loadStudents();
+            }
+          });
+      } else {
+        window.location.href = "login_register.html";
       }
+    });
 
-      firebase.firestore().collection("members").get().then(snapshot => {
-        const tbody = document.querySelector("#studentTable tbody");
+    function loadStudents() {
+      firebase.firestore().collection("students").onSnapshot(snapshot => {
+        tableBody.innerHTML = "";
         snapshot.forEach(doc => {
           const data = doc.data();
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${data.name || ""}</td>
-            <td>${data.ic || ""}</td>
-            <td>${data.school || ""}</td>
-            <td>${data.phone || ""}</td>
-            <td>${data.rank || "未填写"}</td>
-            <td><img class="photo" src="${data.photoURL || 'default.jpg'}" alt="学生照片"></td>
-            <td>${data.registerDate || ""}</td>
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
+            <td><img src="${data.photoURL || ''}" class="student-photo"></td>
+            <td>${data.nameCn || ''}<br>${data.nameEn || ''}</td>
+            <td>${data.nric || ''}</td>
+            <td>${data.school || ''}</td>
+            <td>${data.coach || ''}</td>
+            <td>${data.enrollDate || ''}</td>
+            <td><button onclick="viewStudent('${doc.id}')">查看</button></td>
           `;
-          tbody.appendChild(row);
+          tableBody.appendChild(tr);
         });
       });
-    });
+    }
 
-    // 搜索功能
-    document.getElementById("searchInput").addEventListener("input", function () {
+    function viewStudent(id) {
+      window.location.href = `student_detail.html?id=${id}`;
+    }
+
+    function exportToCSV() {
+      // 简易 CSV 导出（示意）
+      alert("导出功能开发中...");
+    }
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login_register.html";
+      });
+    }
+
+    searchInput.addEventListener("input", function () {
       const filter = this.value.toLowerCase();
-      const rows = document.querySelectorAll("#studentTable tbody tr");
-      rows.forEach(row => {
+      const rows = tableBody.getElementsByTagName("tr");
+      for (let row of rows) {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(filter) ? "" : "none";
-      });
+      }
     });
-
-    // 导出 CSV
-    function exportCSV() {
-      let csv = "学生姓名,身份证,学校,电话,带级,注册时间\n";
-      document.querySelectorAll("#studentTable tbody tr").forEach(row => {
-        const cells = row.querySelectorAll("td");
-        const rowText = Array.from(cells).slice(0, 6).map(cell => cell.textContent).join(",");
-        csv += rowText + "\n";
-      });
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "学生资料.csv";
-      link.click();
-    }
   </script>
 </body>
 </html>
