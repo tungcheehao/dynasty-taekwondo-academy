@@ -1,19 +1,21 @@
-// 初始化 Firebase
+// Firebase 配置
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+  authDomain: "dynastytkd-2d87e.firebaseapp.com",
+  projectId: "dynastytkd-2d87e",
+  storageBucket: "dynastytkd-2d87e.appspot.com", // ⚠️ 更正了你的 bucket 域名
+  messagingSenderId: "271608799011",
+  appId: "1:271608799011:web:bee1fd1bf4ee1113383696",
+  measurementId: "G-NV2HLC2PMC"
 };
 
+// 初始化 Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// 注册
+// 注册处理
 const registerForm = document.getElementById("registerForm");
 if (registerForm) {
   registerForm.addEventListener("submit", (e) => {
@@ -45,7 +47,7 @@ if (registerForm) {
   });
 }
 
-// 登录
+// 登录处理
 const loginForm = document.getElementById("loginForm");
 if (loginForm) {
   loginForm.addEventListener("submit", (e) => {
@@ -82,7 +84,7 @@ if (loginForm) {
   });
 }
 
-// 忘记密码
+// 忘记密码处理
 const resetForm = document.getElementById("resetForm");
 if (resetForm) {
   resetForm.addEventListener("submit", (e) => {
@@ -90,7 +92,7 @@ if (resetForm) {
     const email = document.getElementById("resetEmail").value.trim();
     auth.sendPasswordResetEmail(email)
       .then(() => {
-        alert("密码重设链接已发送！");
+        alert("密码重设邮件已发送！");
       })
       .catch((error) => {
         alert("发送失败：" + error.message);
@@ -98,7 +100,7 @@ if (resetForm) {
   });
 }
 
-// 登出
+// 登出函数
 function logout() {
   auth.signOut()
     .then(() => {
@@ -110,7 +112,7 @@ function logout() {
     });
 }
 
-// 自动显示登录用户邮箱
+// 显示已登录用户
 auth.onAuthStateChanged((user) => {
   if (user && document.getElementById("userEmail")) {
     document.getElementById("userEmail").textContent = user.email;
