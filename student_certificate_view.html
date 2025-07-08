@@ -2,123 +2,110 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>🎖️ 我的证书 - Dynasty Taekwondo</title>
+  <title>证书查看 / Certificate - Dynasty Taekwondo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f9f9f9;
       padding: 30px;
+      background-color: #f7f7f7;
     }
     h2 {
       text-align: center;
       color: #003049;
     }
-    .certificate-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 30px;
-      margin-top: 40px;
-    }
-    .certificate-card {
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    .certificate-list {
+      max-width: 800px;
+      margin: 30px auto;
+      background-color: white;
       padding: 20px;
-      width: 300px;
-      text-align: center;
+      border-radius: 8px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
     }
-    .certificate-card img {
-      width: 100%;
-      max-height: 180px;
-      object-fit: cover;
-      border-radius: 6px;
+    .certificate-item {
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
     }
-    .certificate-info {
-      margin-top: 12px;
-      font-size: 15px;
+    .certificate-item h4 {
+      margin: 0;
+      color: #0077b6;
     }
-    .download-btn {
+    .certificate-item p {
+      margin: 4px 0;
+      color: #555;
+    }
+    .certificate-item a {
       display: inline-block;
-      margin-top: 10px;
-      padding: 8px 16px;
-      background-color: #005f73;
-      color: #fff;
-      border-radius: 6px;
-      font-size: 14px;
+      margin-top: 6px;
       text-decoration: none;
-    }
-    .download-btn:hover {
-      background-color: #0a9396;
+      background-color: #005f73;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
-  <h2>🎖️ 我的电子证书 / My Certificates</h2>
 
-  <div class="certificate-container" id="certList">
-    <p>载入中，请稍候...</p>
+  <h2>🎓 我的证书 / My Certificates</h2>
+
+  <div class="certificate-list" id="certificateList">
+    <p>正在加载证书列表...</p>
+  </div>
+
+  <div style="text-align: center; margin-top: 30px;">
+    <a href="student_zone.html" class="btn">⬅️ 返回学生专区 / Back to Student Zone</a>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 项目配置
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    const certificateList = document.getElementById("certificateList");
 
     auth.onAuthStateChanged(user => {
       if (!user) {
         alert("请先登录。");
-        location.href = "login_register.html";
+        window.location.href = "login_register.html";
         return;
       }
-      loadCertificates(user.uid);
-    });
 
-    function loadCertificates(uid) {
-      const container = document.getElementById("certList");
-      db.collection("certificates").where("userId", "==", uid).get()
+      db.collection("certificates").where("uid", "==", user.uid).orderBy("date", "desc").get()
         .then(snapshot => {
           if (snapshot.empty) {
-            container.innerHTML = "<p>尚未上传任何证书。</p>";
+            certificateList.innerHTML = "<p>目前还没有证书。</p>";
             return;
           }
 
-          container.innerHTML = "";
+          certificateList.innerHTML = "";
           snapshot.forEach(doc => {
-            const cert = doc.data();
-            const card = document.createElement("div");
-            card.className = "certificate-card";
-
-            card.innerHTML = `
-              <img src="${cert.imageUrl}" alt="Certificate">
-              <div class="certificate-info">
-                <strong>名称 / Title：</strong> ${cert.title}<br>
-                <strong>日期 / Date：</strong> ${new Date(cert.date.seconds * 1000).toLocaleDateString()}<br>
-                <strong>考官 / Examiner：</strong> ${cert.examiner}
-              </div>
-              <a class="download-btn" href="${cert.imageUrl}" target="_blank">📥 下载证书</a>
+            const data = doc.data();
+            const div = document.createElement("div");
+            div.className = "certificate-item";
+            div.innerHTML = `
+              <h4>${data.title || "未命名证书"}</h4>
+              <p>日期 / Date: ${data.date?.toDate().toLocaleDateString() || "-"}</p>
+              <a href="${data.fileUrl}" target="_blank">📄 查看 / 下载证书</a>
             `;
-            container.appendChild(card);
+            certificateList.appendChild(div);
           });
         })
         .catch(error => {
-          console.error("Error loading certificates: ", error);
-          container.innerHTML = "<p>无法载入证书，请稍后再试。</p>";
+          certificateList.innerHTML = `<p>无法加载证书：${error.message}</p>`;
         });
-    }
+    });
   </script>
+
 </body>
 </html>
