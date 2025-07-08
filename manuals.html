@@ -2,81 +2,136 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>📘 使用手册 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>操作手册 / Manuals - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f2f7fa;
-      color: #333;
+      background-color: #f4f4f4;
       padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     h2 {
       text-align: center;
       color: #003049;
     }
-    .manual {
-      max-width: 900px;
-      margin: 20px auto;
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 20px 30px;
+    input[type="file"] {
+      margin-top: 10px;
     }
-    .manual h3 {
-      color: #005f73;
-      margin-top: 30px;
-    }
-    .manual p, .manual li {
-      font-size: 16px;
-      line-height: 1.6;
-    }
-    .faq {
+    ul {
       margin-top: 20px;
-      border-top: 1px solid #ccc;
-      padding-top: 20px;
+      padding-left: 0;
+      list-style: none;
+    }
+    li {
+      background: #e0f7fa;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn {
+      background-color: #005f73;
+      color: white;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 5px;
+    }
+    .btn:hover {
+      background-color: #0a9396;
     }
   </style>
 </head>
 <body>
-  <h2>📘 使用手册 / User Manual</h2>
+  <div class="container">
+    <h2>📚 操作手册 / System Manuals</h2>
+    <p>上传 PDF、Word、图片等格式的操作说明文档，供教练或管理员查看。</p>
 
-  <div class="manual">
-    <h3>👨‍🏫 教练/管理员操作指南</h3>
-    <ul>
-      <li>如何添加/更新学生资料？→ 前往 <strong>学生专区</strong> 或 <strong>管理员面板</strong></li>
-      <li>如何发布考试/讲座？→ 前往 <strong>event_exam_register.html</strong></li>
-      <li>如何上传比赛成绩？→ 进入 <strong>admin_competition_update.html</strong></li>
-      <li>如何生成排行榜？→ 系统会自动同步成绩与积分</li>
-      <li>如何进行数据库备份？→ 前往 <strong>database_backup.html</strong></li>
+    <input type="file" id="manualFile" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+    <button class="btn" onclick="uploadManual()">📤 上传文件</button>
+
+    <h3 style="margin-top: 30px;">📄 已上传手册 / Uploaded Manuals</h3>
+    <ul id="manualList">
+      <!-- 手册列表将自动加载 -->
     </ul>
-
-    <h3>👩‍🎓 学生/会员操作指南</h3>
-    <ul>
-      <li>如何注册账户？→ 请前往 <strong>login_register.html</strong> 并点击“注册”</li>
-      <li>如何查看个人资料？→ 登录后进入 <strong>学生专区</strong></li>
-      <li>如何报名考试或课程？→ 前往 <strong>event_exam_list.html</strong></li>
-      <li>如何查看比赛/考试成绩？→ 查看 <strong>exam_result_view.html</strong> 或 <strong>competition_result_view.html</strong></li>
-      <li>如何留言或点赞教练日志？→ 进入 <strong>coach_log.html</strong></li>
-    </ul>
-
-    <h3>🛒 商店操作指南</h3>
-    <ul>
-      <li>浏览商品与下单 → 进入 <strong>shop.html</strong></li>
-      <li>管理员查看订单 → 进入 <strong>admin_shop_orders.html</strong></li>
-    </ul>
-
-    <div class="faq">
-      <h3>❓ 常见问题（FAQ）</h3>
-      <p><strong>Q1:</strong> 忘记密码怎么办？<br><strong>A:</strong> 请点击登录页的“忘记密码”链接，输入注册邮箱以重设密码。</p>
-      <p><strong>Q2:</strong> 我看到的信息错误，如何更正？<br><strong>A:</strong> 请联系教练或管理员协助修改。</p>
-      <p><strong>Q3:</strong> 如何切换语言？<br><strong>A:</strong> 页面右上角将提供中英切换选项（开发中）。</p>
-    </div>
   </div>
 
-  <div style="text-align:center; margin-top: 30px;">
-    <a href="index.html" class="btn">🏠 返回首页</a>
-  </div>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      // 替换为你的 Firebase 配置
+    };
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+    const db = firebase.firestore();
+
+    function uploadManual() {
+      const file = document.getElementById("manualFile").files[0];
+      if (!file) return alert("请选择一个文件上传。");
+
+      const ref = storage.ref('manuals/' + file.name);
+      ref.put(file).then(snapshot => {
+        return snapshot.ref.getDownloadURL();
+      }).then(url => {
+        return db.collection("manuals").add({
+          name: file.name,
+          url: url,
+          uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }).then(() => {
+        alert("上传成功！");
+        loadManuals();
+      }).catch(error => {
+        alert("上传失败：" + error.message);
+      });
+    }
+
+    function loadManuals() {
+      const list = document.getElementById("manualList");
+      list.innerHTML = "";
+      db.collection("manuals").orderBy("uploadedAt", "desc").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <span>${data.name}</span>
+            <span>
+              <a class="btn" href="${data.url}" target="_blank">查看 / View</a>
+              <button class="btn" onclick="deleteManual('${doc.id}', '${data.name}')">删除 / Delete</button>
+            </span>`;
+          list.appendChild(li);
+        });
+      });
+    }
+
+    function deleteManual(id, name) {
+      if (!confirm("确定要删除此文件？")) return;
+      storage.ref('manuals/' + name).delete().then(() => {
+        return db.collection("manuals").doc(id).delete();
+      }).then(() => {
+        alert("文件已删除。");
+        loadManuals();
+      }).catch(error => {
+        alert("删除失败：" + error.message);
+      });
+    }
+
+    window.onload = loadManuals;
+  </script>
 </body>
 </html>
