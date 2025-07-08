@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>首页内容管理 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f9f9;
+      padding: 20px;
+      color: #222;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+      margin-bottom: 30px;
+    }
+    label {
+      font-weight: bold;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background-color: #005f73;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0a9396;
+    }
+    .preview {
+      background-color: white;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-top: 40px;
+    }
+    .preview h3 {
+      margin-top: 0;
+      color: #003049;
+    }
+  </style>
+</head>
+<body>
+  <h2>🖥️ 首页内容编辑 / Homepage Editor</h2>
+
+  <form id="editorForm">
+    <label for="mainTitle">首页标题 / Main Title</label>
+    <input type="text" id="mainTitle" placeholder="例如：欢迎来到 Dynasty Taekwondo">
+
+    <label for="mainDescription">简介 / Description</label>
+    <textarea id="mainDescription" rows="4" placeholder="写下您的介绍文字..."></textarea>
+
+    <label for="announcement">公告 / Announcement</label>
+    <textarea id="announcement" rows="3" placeholder="输入最新公告..."></textarea>
+
+    <label for="bannerImage">Banner 图片链接 / Banner Image URL</label>
+    <input type="text" id="bannerImage" placeholder="例如：https://.../banner.jpg">
+
+    <label for="videoLink">影片链接（可选）/ YouTube Video Embed URL</label>
+    <input type="text" id="videoLink" placeholder="例如：https://www.youtube.com/embed/...">
+
+    <button type="submit">💾 保存并预览</button>
+  </form>
+
+  <div class="preview" id="previewBlock" style="display:none;">
+    <h3>📋 预览 Preview</h3>
+    <p><strong>标题:</strong> <span id="previewTitle"></span></p>
+    <p><strong>简介:</strong> <span id="previewDesc"></span></p>
+    <p><strong>公告:</strong> <span id="previewAnnounce"></span></p>
+    <p><strong>Banner 图:</strong><br><img id="previewImage" src="" alt="Banner" style="max-width:100%; margin-top:10px;"></p>
+    <p><strong>影片:</strong><br><iframe id="previewVideo" width="100%" height="300" style="margin-top:10px;" frameborder="0" allowfullscreen></iframe></p>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const db = firebase.firestore();
+    const form = document.getElementById("editorForm");
+
+    function loadHomepageContent() {
+      db.collection("website").doc("homepage").get().then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          document.getElementById("mainTitle").value = data.title || "";
+          document.getElementById("mainDescription").value = data.description || "";
+          document.getElementById("announcement").value = data.announcement || "";
+          document.getElementById("bannerImage").value = data.banner || "";
+          document.getElementById("videoLink").value = data.video || "";
+        }
+      });
+    }
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const title = document.getElementById("mainTitle").value;
+      const description = document.getElementById("mainDescription").value;
+      const announcement = document.getElementById("announcement").value;
+      const banner = document.getElementById("bannerImage").value;
+      const video = document.getElementById("videoLink").value;
+
+      db.collection("website").doc("homepage").set({
+        title, description, announcement, banner, video
+      }).then(() => {
+        document.getElementById("previewBlock").style.display = "block";
+        document.getElementById("previewTitle").innerText = title;
+        document.getElementById("previewDesc").innerText = description;
+        document.getElementById("previewAnnounce").innerText = announcement;
+        document.getElementById("previewImage").src = banner;
+        document.getElementById("previewVideo").src = video;
+        alert("保存成功！内容已更新。");
+      });
+    });
+
+    loadHomepageContent();
+  </script>
+</body>
+</html>
