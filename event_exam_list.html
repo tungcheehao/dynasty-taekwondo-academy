@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>活动/考试报名名单 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f1f1f1;
+      padding: 30px;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+      font-size: 15px;
+    }
+    th {
+      background-color: #a2d5f2;
+    }
+    input[type="text"], select {
+      padding: 8px;
+      font-size: 14px;
+      width: 200px;
+      margin-right: 10px;
+    }
+    .controls {
+      margin-top: 20px;
+      text-align: center;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: #005f73;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0a9396;
+    }
+    .back {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .back a {
+      text-decoration: none;
+      color: #005f73;
+    }
+  </style>
+</head>
+<body>
+  <h2>📋 活动 / 考试 报名名单</h2>
+
+  <div class="controls">
+    <input type="text" id="searchInput" placeholder="搜索姓名或IC">
+    <select id="eventTypeFilter">
+      <option value="">全部类型</option>
+      <option value="考试 / Exam">考试 / Exam</option>
+      <option value="讲座 / Seminar">讲座 / Seminar</option>
+      <option value="训练营 / Training Camp">训练营 / Training Camp</option>
+      <option value="表演 / Performance">表演 / Performance</option>
+    </select>
+    <button onclick="exportCSV()">导出CSV</button>
+  </div>
+
+  <table id="eventTable">
+    <thead>
+      <tr>
+        <th>姓名</th>
+        <th>身份证号</th>
+        <th>项目类型</th>
+        <th>活动名称</th>
+        <th>日期</th>
+        <th>备注</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="back">
+    <a href="admin.html">🔙 返回后台 / Back to Admin</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const tableBody = document.querySelector("#eventTable tbody");
+
+    function loadData() {
+      db.collection("event_registrations").orderBy("eventDate", "desc").get().then(snapshot => {
+        tableBody.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${data.name || "-"}</td>
+            <td>${data.ic || "-"}</td>
+            <td>${data.eventType || "-"}</td>
+            <td>${data.eventTitle || "-"}</td>
+            <td>${data.eventDate || "-"}</td>
+            <td>${data.remarks || ""}</td>
+          `;
+          tableBody.appendChild(tr);
+        });
+      });
+    }
+
+    function exportCSV() {
+      let rows = [["姓名", "身份证号", "项目类型", "活动名称", "日期", "备注"]];
+      document.querySelectorAll("#eventTable tbody tr").forEach(row => {
+        let cols = Array.from(row.querySelectorAll("td")).map(td => td.innerText);
+        rows.push(cols);
+      });
+      let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+      const link = document.createElement("a");
+      link.setAttribute("href", encodeURI(csvContent));
+      link.setAttribute("download", "event_registrations.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    document.getElementById("searchInput").addEventListener("input", function () {
+      const value = this.value.toLowerCase();
+      document.querySelectorAll("#eventTable tbody tr").forEach(row => {
+        const name = row.cells[0].innerText.toLowerCase();
+        const ic = row.cells[1].innerText.toLowerCase();
+        row.style.display = (name.includes(value) || ic.includes(value)) ? "" : "none";
+      });
+    });
+
+    document.getElementById("eventTypeFilter").addEventListener("change", function () {
+      const value = this.value;
+      document.querySelectorAll("#eventTable tbody tr").forEach(row => {
+        const type = row.cells[2].innerText;
+        row.style.display = (!value || type === value) ? "" : "none";
+      });
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
