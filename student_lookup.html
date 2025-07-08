@@ -8,90 +8,108 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f8f8f8;
-      padding: 30px;
+      background-color: #f7f9fb;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    form {
+      max-width: 400px;
+      margin: 30px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       text-align: center;
     }
     input {
-      padding: 10px;
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      margin-bottom: 20px;
       font-size: 16px;
-      width: 300px;
-      max-width: 90%;
-      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
     button {
-      padding: 10px 20px;
-      font-size: 16px;
       background-color: #005f73;
       color: white;
+      padding: 12px;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
+      width: 100%;
+      font-size: 16px;
     }
     button:hover {
       background-color: #0a9396;
     }
     .result {
-      margin-top: 30px;
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #e3f2fd;
+      border-radius: 6px;
+      text-align: center;
       font-size: 18px;
-    }
-    .result p {
-      margin: 10px 0;
     }
   </style>
 </head>
 <body>
-  <h2>🎓 学生带级查询 / Belt Rank Lookup</h2>
-  <p>请输入学生的身份证号码（只限学生本身）</p>
+  <h2>🎖️ 学生带级查询 / Belt Level Lookup</h2>
+  <form id="lookupForm">
+    <input type="text" id="lookupIC" placeholder="请输入学生身份证号码 / NRIC" required>
+    <button type="submit">🔍 查询</button>
+  </form>
 
-  <input type="text" id="icInput" placeholder="学生身份证号码">
-  <br>
-  <button onclick="lookupRank()">🔍 查询</button>
+  <div id="result" class="result" style="display:none;"></div>
 
-  <div class="result" id="resultBox"></div>
-
-  <div style="margin-top: 30px;">
-    <a href="index.html" class="btn">🏠 回首页 / Back to Home</a>
+  <div style="text-align: center; margin-top: 30px;">
+    <a href="index.html">🏠 回首页 / Back to Home</a>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696",
-      measurementId: "G-NV2HLC2PMC"
+      // 你的 Firebase 配置（请替换成实际项目）
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    function lookupRank() {
-      const ic = document.getElementById("icInput").value.trim();
-      const resultBox = document.getElementById("resultBox");
-      resultBox.innerHTML = "⏳ 查询中...";
+    const form = document.getElementById("lookupForm");
+    const result = document.getElementById("result");
 
-      db.collection("members").where("ic", "==", ic).get()
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const nric = document.getElementById("lookupIC").value.trim();
+      if (!nric) return;
+
+      db.collection("students")
+        .where("nric", "==", nric)
+        .limit(1)
+        .get()
         .then(snapshot => {
           if (snapshot.empty) {
-            resultBox.innerHTML = "❌ 找不到该学生资料。请确认身份证号码是否正确。";
+            result.textContent = "❌ 未找到该身份证号的学生资料。";
+            result.style.display = "block";
             return;
           }
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            resultBox.innerHTML = `
-              <p><strong>姓名 / Name：</strong>${data.name || "未填写"}</p>
-              <p><strong>当前带级 / Belt Rank：</strong>${data.rank || "未登记"}</p>
-            `;
-          });
+
+          const data = snapshot.docs[0].data();
+          result.innerHTML = `
+            ✅ 学生姓名：${data.nameCn || ''} / ${data.nameEn || ''}<br>
+            🥋 当前带级：${data.beltLevel || '未记录'}
+          `;
+          result.style.display = "block";
         })
-        .catch(error => {
-          resultBox.innerHTML = "⚠️ 查询失败：" + error.message;
+        .catch(err => {
+          result.textContent = "❌ 查询失败，请稍后重试。";
+          result.style.display = "block";
         });
-    }
+    });
   </script>
 </body>
 </html>
