@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>语言包编辑 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f9f9f9;
+      background-color: #f1f5f9;
       padding: 20px;
     }
     h2 {
@@ -17,111 +17,122 @@
     }
     table {
       width: 100%;
+      max-width: 900px;
+      margin: 20px auto;
       border-collapse: collapse;
-      margin-top: 20px;
       background: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     th, td {
-      border: 1px solid #ccc;
       padding: 12px;
-      text-align: center;
+      border: 1px solid #ccc;
+      text-align: left;
     }
     th {
-      background-color: #005f73;
-      color: white;
+      background-color: #dee2e6;
     }
     textarea {
       width: 100%;
-      height: 80px;
+      padding: 10px;
+      resize: vertical;
     }
     button {
-      padding: 8px 16px;
-      margin: 10px;
-      background-color: #0a9396;
+      padding: 10px 20px;
+      background-color: #005f73;
       color: white;
       border: none;
       border-radius: 4px;
+      margin-top: 10px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #00787a;
+      background-color: #0a9396;
     }
   </style>
 </head>
 <body>
-  <h2>🌐 语言包编辑 / Language Pack Editor</h2>
-  <table id="langTable">
-    <thead>
-      <tr>
-        <th>键值 / Key</th>
-        <th>简体中文</th>
-        <th>English</th>
-        <th>操作 / Action</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <h2>🌐 语言包管理 / Language Pack Editor</h2>
 
-  <div style="text-align:center;">
-    <button onclick="addNewRow()">➕ 新增语言条目</button>
-    <button onclick="saveAll()">💾 保存全部</button>
+  <div style="max-width: 960px; margin: auto;">
+    <table id="languageTable">
+      <thead>
+        <tr>
+          <th>关键词 Key</th>
+          <th>中文 Chinese</th>
+          <th>英文 English</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 自动生成语言行 -->
+      </tbody>
+    </table>
+    <div style="text-align: center;">
+      <button onclick="saveLanguagePack()">💾 保存更新 / Save Updates</button>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top: 30px;">
+    <a href="admin.html" class="btn">⬅️ 返回管理员面板 / Back to Admin Panel</a>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-  <script src="auth.js"></script>
   <script>
+    const firebaseConfig = {
+      // 替换为你的 Firebase 配置
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.firestore();
-    const tableBody = document.querySelector("#langTable tbody");
 
-    function loadLangPack() {
-      tableBody.innerHTML = "";
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert("请先登录！");
+        location.href = "login_register.html";
+      } else {
+        loadLanguagePack();
+      }
+    });
+
+    function loadLanguagePack() {
       db.collection("language_pack").get().then(snapshot => {
+        const tbody = document.querySelector("#languageTable tbody");
+        tbody.innerHTML = "";
         snapshot.forEach(doc => {
           const data = doc.data();
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td><input value="${doc.id}" disabled></td>
-            <td><textarea data-key="${doc.id}" data-lang="zh">${data.zh || ''}</textarea></td>
-            <td><textarea data-key="${doc.id}" data-lang="en">${data.en || ''}</textarea></td>
-            <td><button onclick="deleteRow('${doc.id}')">删除</button></td>
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${doc.id}</td>
+            <td><textarea data-key="${doc.id}" data-lang="zh">${data.zh || ""}</textarea></td>
+            <td><textarea data-key="${doc.id}" data-lang="en">${data.en || ""}</textarea></td>
           `;
-          tableBody.appendChild(row);
+          tbody.appendChild(tr);
         });
       });
     }
 
-    function addNewRow() {
-      const row = document.createElement("tr");
-      const newKey = "key_" + Date.now();
-      row.innerHTML = `
-        <td><input value="${newKey}"></td>
-        <td><textarea data-key="${newKey}" data-lang="zh"></textarea></td>
-        <td><textarea data-key="${newKey}" data-lang="en"></textarea></td>
-        <td><button onclick="this.parentElement.parentElement.remove()">移除</button></td>
-      `;
-      tableBody.appendChild(row);
-    }
+    function saveLanguagePack() {
+      const textareas = document.querySelectorAll("textarea");
+      const updates = {};
 
-    function saveAll() {
-      const rows = tableBody.querySelectorAll("tr");
-      rows.forEach(row => {
-        const key = row.querySelector("td input").value;
-        const zh = row.querySelector('textarea[data-lang="zh"]').value;
-        const en = row.querySelector('textarea[data-lang="en"]').value;
-        db.collection("language_pack").doc(key).set({ zh, en });
+      textareas.forEach(area => {
+        const key = area.getAttribute("data-key");
+        const lang = area.getAttribute("data-lang");
+        if (!updates[key]) updates[key] = {};
+        updates[key][lang] = area.value;
       });
-      alert("语言包已保存！");
-    }
 
-    function deleteRow(key) {
-      if (confirm("确认删除此语言条目？")) {
-        db.collection("language_pack").doc(key).delete().then(loadLangPack);
+      const batch = db.batch();
+      for (const key in updates) {
+        const ref = db.collection("language_pack").doc(key);
+        batch.set(ref, updates[key], { merge: true });
       }
-    }
 
-    loadLangPack();
+      batch.commit().then(() => {
+        alert("语言包已更新！Language pack updated.");
+      });
+    }
   </script>
 </body>
 </html>
