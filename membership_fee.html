@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>会员费记录 - Dynasty Taekwondo</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f9f9;
+      padding: 20px;
+      color: #222;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: center;
+    }
+    th {
+      background-color: #005f73;
+      color: white;
+    }
+    select, button {
+      padding: 8px 12px;
+      margin: 10px 5px;
+      font-size: 14px;
+    }
+    .filters {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .status-paid {
+      color: green;
+      font-weight: bold;
+    }
+    .status-unpaid {
+      color: red;
+      font-weight: bold;
+    }
+    .status-inactive {
+      color: gray;
+      font-style: italic;
+    }
+    .export-btn {
+      background-color: #005f73;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .export-btn:hover {
+      background-color: #0a9396;
+    }
+  </style>
+</head>
+<body>
+  <h2>📅 学生会员费记录 / Membership Fee Records</h2>
+
+  <div class="filters">
+    <label for="yearSelect">选择年份 / Select Year:</label>
+    <select id="yearSelect">
+      <option value="2024">2024</option>
+      <option value="2025" selected>2025</option>
+      <option value="2026">2026</option>
+    </select>
+    <button class="export-btn" onclick="exportCSV()">📥 导出 CSV</button>
+  </div>
+
+  <table id="feeTable">
+    <thead>
+      <tr>
+        <th>姓名 / Name</th>
+        <th>身份证 / IC</th>
+        <th>状态 / Status</th>
+        <th>付款状态 / Payment</th>
+        <th>付款日期 / Date</th>
+        <th>操作 / Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 动态加载学生数据 -->
+    </tbody>
+  </table>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const db = firebase.firestore();
+    const feeTableBody = document.querySelector("#feeTable tbody");
+    const yearSelect = document.getElementById("yearSelect");
+
+    yearSelect.addEventListener("change", loadFeeRecords);
+
+    function loadFeeRecords() {
+      const year = yearSelect.value;
+      feeTableBody.innerHTML = "";
+
+      db.collection("members").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const uid = doc.id;
+          const fees = data.fees || {};
+          const yearFee = fees[year] || { status: "未付", date: "" };
+          const activeStatus = data.active ? "活跃" : "暂停";
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${data.name || "-"}</td>
+            <td>${data.ic || "-"}</td>
+            <td class="${data.active ? 'status-paid' : 'status-inactive'}">${activeStatus}</td>
+            <td class="${yearFee.status === '已付' ? 'status-paid' : 'status-unpaid'}">${yearFee.status}</td>
+            <td>${yearFee.date || "-"}</td>
+            <td>
+              <button onclick="markAsPaid('${uid}', '${year}')">✅ 标记已付</button>
+              <button onclick="markAsUnpaid('${uid}', '${year}')">❌ 标记未付</button>
+            </td>
+          `;
+          feeTableBody.appendChild(row);
+        });
+      });
+    }
+
+    function markAsPaid(uid, year) {
+      const today = new Date().toISOString().split("T")[0];
+      db.collection("members").doc(uid).set({
+        fees: {
+          [year]: { status: "已付", date: today }
+        }
+      }, { merge: true }).then(loadFeeRecords);
+    }
+
+    function markAsUnpaid(uid, year) {
+      db.collection("members").doc(uid).set({
+        fees: {
+          [year]: { status: "未付", date: "" }
+        }
+      }, { merge: true }).then(loadFeeRecords);
+    }
+
+    function exportCSV() {
+      let csv = "Name,IC,Status,Payment Status,Date\n";
+      document.querySelectorAll("#feeTable tbody tr").forEach(row => {
+        const cells = row.querySelectorAll("td");
+        const rowData = Array.from(cells).map(td => td.textContent.trim()).join(",");
+        csv += rowData + "\n";
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `membership_fee_${yearSelect.value}.csv`;
+      link.click();
+    }
+
+    loadFeeRecords();
+  </script>
+</body>
+</html>
