@@ -2,191 +2,197 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>📘 教练日志 - Dynasty Taekwondo</title>
+  <title>教练日志 - Dynasty Taekwondo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f8f9fa;
+      background-color: #f4f4f4;
       padding: 20px;
-      color: #333;
     }
     h2 {
       text-align: center;
       color: #003049;
     }
-    form {
-      max-width: 600px;
+    .log-form, .log-container {
+      max-width: 900px;
       margin: 20px auto;
-      background: #fff;
+      background: white;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    input, textarea, button {
+    input, textarea {
       width: 100%;
       padding: 10px;
-      margin: 8px 0;
+      margin-top: 10px;
       font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
-    .log-container {
-      max-width: 900px;
-      margin: 30px auto;
+    button {
+      background-color: #005f73;
+      color: white;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #0a9396;
     }
     .log-entry {
-      background: #fff;
-      border: 1px solid #ccc;
-      padding: 16px;
-      border-radius: 6px;
-      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
     }
-    .log-entry img, .log-entry video {
+    .log-entry h4 {
+      margin: 0;
+      color: #222;
+    }
+    .log-entry p {
+      margin: 5px 0;
+      color: #444;
+    }
+    .media {
       max-width: 100%;
       margin-top: 10px;
-      border-radius: 4px;
     }
-    .comment-section {
-      margin-top: 10px;
+    .comment-box {
+      margin-top: 15px;
     }
     .comment {
       font-size: 14px;
-      margin: 5px 0;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 4px;
-    }
-    .like-btn {
-      background: none;
-      color: #e76f51;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
       margin-top: 5px;
+      padding-left: 10px;
+      border-left: 3px solid #ccc;
     }
   </style>
 </head>
 <body>
-  <h2>📘 教练日志 / Coach Log</h2>
 
-  <form id="logForm">
-    <input type="text" id="title" placeholder="日志标题 / Title" required>
-    <textarea id="content" placeholder="日志内容 / Log content..." rows="5" required></textarea>
-    <input type="file" id="mediaFile" accept="image/*,video/*">
-    <button type="submit">📤 发布日志</button>
-  </form>
+  <h2>📘 教练日志 / Coach's Log</h2>
 
-  <div class="log-container" id="logContainer">
-    <!-- 教练日志将显示于此 -->
+  <div class="log-form">
+    <h3>✍️ 发布新日志 / New Log Entry</h3>
+    <input type="text" id="logTitle" placeholder="日志标题 / Title">
+    <textarea id="logContent" rows="5" placeholder="日志内容 / Content"></textarea>
+    <input type="file" id="logMedia" accept="image/*,video/*">
+    <button onclick="submitLog()">发布日志</button>
+  </div>
+
+  <div class="log-container" id="logList">
+    <h3>🗂️ 所有日志 / All Logs</h3>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 配置
     };
-
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    const logForm = document.getElementById("logForm");
-    const logContainer = document.getElementById("logContainer");
+    async function submitLog() {
+      const title = document.getElementById("logTitle").value;
+      const content = document.getElementById("logContent").value;
+      const file = document.getElementById("logMedia").files[0];
 
-    auth.onAuthStateChanged(user => {
-      if (!user) return;
-      loadLogs();
-    });
+      if (!title || !content) {
+        alert("请填写标题和内容");
+        return;
+      }
 
-    logForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const title = document.getElementById("title").value;
-      const content = document.getElementById("content").value;
-      const file = document.getElementById("mediaFile").files[0];
-
-      let mediaUrl = "";
+      let mediaURL = "";
       let mediaType = "";
 
       if (file) {
-        const ref = storage.ref().child("coachLogs/" + file.name);
-        await ref.put(file);
-        mediaUrl = await ref.getDownloadURL();
-        mediaType = file.type.startsWith("video") ? "video" : "image";
+        const fileRef = storage.ref().child("coach_logs/" + Date.now() + "_" + file.name);
+        await fileRef.put(file);
+        mediaURL = await fileRef.getDownloadURL();
+        mediaType = file.type.startsWith("image") ? "image" : "video";
       }
 
       await db.collection("coach_logs").add({
         title,
         content,
-        mediaUrl,
+        mediaURL,
         mediaType,
-        author: auth.currentUser.email,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        likes: [],
-        comments: []
+        timestamp: new Date(),
+        comments: [],
+        likes: 0
       });
 
-      logForm.reset();
+      alert("日志已发布");
+      document.getElementById("logTitle").value = "";
+      document.getElementById("logContent").value = "";
+      document.getElementById("logMedia").value = "";
       loadLogs();
-    });
-
-    function loadLogs() {
-      db.collection("coach_logs").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-        logContainer.innerHTML = "";
-        snapshot.forEach(doc => {
-          const log = doc.data();
-          const div = document.createElement("div");
-          div.className = "log-entry";
-          div.innerHTML = `
-            <h3>${log.title}</h3>
-            <p>${log.content}</p>
-            ${log.mediaUrl ? (log.mediaType === "video" 
-              ? `<video controls src="${log.mediaUrl}"></video>`
-              : `<img src="${log.mediaUrl}" alt="教练图片">`) : ""}
-            <button class="like-btn" onclick="likeLog('${doc.id}')">👍🏻 ${log.likes?.length || 0}</button>
-            <div class="comment-section" id="comments-${doc.id}">
-              ${(log.comments || []).map(c => `<div class="comment"><strong>${c.user}:</strong> ${c.text}</div>`).join("")}
-              <input type="text" placeholder="留言 / Comment" onkeydown="submitComment(event, '${doc.id}')">
-            </div>
-          `;
-          logContainer.appendChild(div);
-        });
-      });
     }
 
-    function likeLog(id) {
-      const user = auth.currentUser;
-      const ref = db.collection("coach_logs").doc(id);
-      ref.get().then(doc => {
+    async function loadLogs() {
+      const logList = document.getElementById("logList");
+      const snapshot = await db.collection("coach_logs").orderBy("timestamp", "desc").get();
+      logList.innerHTML = "<h3>🗂️ 所有日志 / All Logs</h3>";
+      snapshot.forEach(doc => {
         const data = doc.data();
-        const likes = data.likes || [];
-        if (!likes.includes(user.email)) {
-          ref.update({ likes: [...likes, user.email] });
+        const div = document.createElement("div");
+        div.className = "log-entry";
+        div.innerHTML = `
+          <h4>${data.title}</h4>
+          <p>${data.content}</p>
+          ${data.mediaURL ? (
+            data.mediaType === "image"
+              ? `<img src="${data.mediaURL}" class="media">`
+              : `<video src="${data.mediaURL}" controls class="media"></video>`
+          ) : ""}
+          <button onclick="likeLog('${doc.id}')">👍🏻 喜欢 (${data.likes})</button>
+          <div class="comment-box">
+            <input type="text" placeholder="留言 / Comment" id="comment-${doc.id}">
+            <button onclick="addComment('${doc.id}')">💬 留言</button>
+          </div>
+          <div id="comments-${doc.id}"></div>
+        `;
+        logList.appendChild(div);
+        if (data.comments && data.comments.length > 0) {
+          const commentsDiv = document.getElementById(`comments-${doc.id}`);
+          data.comments.forEach(comment => {
+            const p = document.createElement("p");
+            p.className = "comment";
+            p.textContent = comment;
+            commentsDiv.appendChild(p);
+          });
         }
       });
     }
 
-    function submitComment(e, logId) {
-      if (e.key === "Enter") {
-        const user = auth.currentUser;
-        const input = e.target;
-        const text = input.value.trim();
-        if (!text) return;
-        const ref = db.collection("coach_logs").doc(logId);
-        ref.update({
-          comments: firebase.firestore.FieldValue.arrayUnion({ user: user.email, text })
-        }).then(() => {
-          input.value = "";
-        });
-      }
+    async function likeLog(id) {
+      const ref = db.collection("coach_logs").doc(id);
+      await ref.update({
+        likes: firebase.firestore.FieldValue.increment(1)
+      });
+      loadLogs();
     }
+
+    async function addComment(id) {
+      const commentInput = document.getElementById(`comment-${id}`);
+      const comment = commentInput.value.trim();
+      if (!comment) return;
+      const ref = db.collection("coach_logs").doc(id);
+      await ref.update({
+        comments: firebase.firestore.FieldValue.arrayUnion(comment)
+      });
+      commentInput.value = "";
+      loadLogs();
+    }
+
+    window.onload = loadLogs;
   </script>
+
 </body>
 </html>
