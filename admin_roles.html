@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>管理员权限管理 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f9f9f9;
+      background-color: #f5f5f5;
       padding: 20px;
-      color: #222;
     }
     h2 {
       text-align: center;
@@ -19,126 +18,104 @@
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
       background: white;
-      margin: 20px auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
+      padding: 12px;
       text-align: center;
+      border: 1px solid #ddd;
     }
     th {
-      background-color: #005f73;
-      color: white;
+      background-color: #a2d2ff;
     }
-    select, input {
+    select, button {
       padding: 6px;
-      width: 90%;
-    }
-    button {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 4px;
       font-size: 14px;
-      cursor: pointer;
     }
-    .add-btn {
-      background-color: #0a9396;
-      color: white;
-      margin-top: 20px;
-    }
-    .delete-btn {
-      background-color: #e63946;
-      color: white;
-    }
-    .form-section {
-      max-width: 500px;
-      margin: auto;
+    .back {
       text-align: center;
-      margin-top: 40px;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <h2>🛡️ 管理员角色管理 / Admin Role Management</h2>
+
+  <h2>👮‍♀️ 管理员权限管理 / Admin Role Management</h2>
 
   <table id="adminTable">
     <thead>
       <tr>
         <th>电邮 / Email</th>
-        <th>角色 / Role</th>
+        <th>当前身份 / Current Role</th>
+        <th>修改为 / Change To</th>
         <th>操作 / Action</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody>
+      <!-- 动态生成 -->
+    </tbody>
   </table>
 
-  <div class="form-section">
-    <h3>➕ 新增管理员</h3>
-    <input type="email" id="newAdminEmail" placeholder="输入电邮">
-    <select id="newAdminRole">
-      <option value="superadmin">超级管理员</option>
-      <option value="coach">教练</option>
-      <option value="admin">普通管理员</option>
-    </select>
-    <br><br>
-    <button class="add-btn" onclick="addAdmin()">添加管理员</button>
+  <div class="back">
+    <a href="admin.html" class="btn">⬅️ 返回管理员面板 / Back to Admin Panel</a>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-  <script src="auth.js"></script>
   <script>
+    const firebaseConfig = {
+      // 请替换成你的 Firebase 配置
+    };
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const tableBody = document.querySelector("#adminTable tbody");
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert("请先登录！");
+        window.location.href = "login_register.html";
+        return;
+      }
+      loadAdmins();
+    });
 
     function loadAdmins() {
-      tableBody.innerHTML = "";
-      db.collection("admins").get().then(snapshot => {
+      db.collection("users").where("role", "in", ["admin", "coach"]).get().then(snapshot => {
+        const tbody = document.querySelector("#adminTable tbody");
+        tbody.innerHTML = "";
         snapshot.forEach(doc => {
           const data = doc.data();
-          const row = document.createElement("tr");
-          row.innerHTML = `
+          const tr = document.createElement("tr");
+
+          tr.innerHTML = `
             <td>${data.email}</td>
+            <td>${data.role}</td>
             <td>
-              <select onchange="updateRole('${doc.id}', this.value)">
-                <option value="superadmin" ${data.role === "superadmin" ? "selected" : ""}>超级管理员</option>
-                <option value="coach" ${data.role === "coach" ? "selected" : ""}>教练</option>
-                <option value="admin" ${data.role === "admin" ? "selected" : ""}>普通管理员</option>
+              <select id="role-${doc.id}">
+                <option value="admin"${data.role === 'admin' ? ' selected' : ''}>Admin</option>
+                <option value="coach"${data.role === 'coach' ? ' selected' : ''}>Coach</option>
+                <option value="disabled"${data.role === 'disabled' ? ' selected' : ''}>Disabled</option>
               </select>
             </td>
-            <td><button class="delete-btn" onclick="deleteAdmin('${doc.id}')">删除</button></td>
+            <td><button onclick="updateRole('${doc.id}')">更新 / Update</button></td>
           `;
-          tableBody.appendChild(row);
+
+          tbody.appendChild(tr);
         });
       });
     }
 
-    function addAdmin() {
-      const email = document.getElementById("newAdminEmail").value.trim();
-      const role = document.getElementById("newAdminRole").value;
-      if (!email) return alert("请输入管理员电邮");
-
-      db.collection("admins").add({ email, role }).then(() => {
-        document.getElementById("newAdminEmail").value = "";
-        loadAdmins();
-      });
+    function updateRole(userId) {
+      const newRole = document.getElementById(`role-${userId}`).value;
+      db.collection("users").doc(userId).update({ role: newRole })
+        .then(() => {
+          alert("权限已更新！");
+          loadAdmins();
+        });
     }
-
-    function deleteAdmin(id) {
-      if (confirm("确定要删除该管理员？")) {
-        db.collection("admins").doc(id).delete().then(loadAdmins);
-      }
-    }
-
-    function updateRole(id, role) {
-      db.collection("admins").doc(id).update({ role }).then(() => {
-        console.log("角色已更新");
-      });
-    }
-
-    loadAdmins();
   </script>
+
 </body>
 </html>
