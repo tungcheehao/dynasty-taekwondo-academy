@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>📥 意见反馈管理 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f8f8;
+      padding: 30px;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      background-color: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: left;
+      font-size: 15px;
+    }
+    th {
+      background-color: #a2d5f2;
+    }
+    select, button {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    .reply-box {
+      width: 100%;
+      margin-top: 10px;
+    }
+    .filter-bar {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>📥 意见反馈管理 / Feedback Admin Panel</h2>
+
+  <div class="filter-bar">
+    <label for="categoryFilter">分类：</label>
+    <select id="categoryFilter">
+      <option value="">全部</option>
+      <option value="网站功能">网站功能</option>
+      <option value="教学课程">教学课程</option>
+      <option value="财务问题">财务问题</option>
+      <option value="一般建议">一般建议</option>
+      <option value="其他">其他</option>
+    </select>
+
+    <label for="statusFilter">状态：</label>
+    <select id="statusFilter">
+      <option value="">全部</option>
+      <option value="未处理">未处理</option>
+      <option value="处理中">处理中</option>
+      <option value="已完成">已完成</option>
+    </select>
+    <button onclick="loadFeedback()">🔄 筛选</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>时间</th>
+        <th>用户</th>
+        <th>分类</th>
+        <th>内容</th>
+        <th>状态</th>
+        <th>回应</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="feedbackTableBody"></tbody>
+  </table>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) location.href = "login_register.html";
+    });
+
+    function loadFeedback() {
+      const category = document.getElementById("categoryFilter").value;
+      const status = document.getElementById("statusFilter").value;
+      let query = db.collection("feedback").orderBy("createdAt", "desc");
+
+      if (category) query = query.where("category", "==", category);
+      if (status) query = query.where("status", "==", status);
+
+      query.get().then(snapshot => {
+        const tbody = document.getElementById("feedbackTableBody");
+        tbody.innerHTML = "";
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${data.createdAt?.toDate().toLocaleString()}</td>
+            <td>${data.userEmail}</td>
+            <td>${data.category}</td>
+            <td>${data.message}</td>
+            <td>
+              <select onchange="updateStatus('${doc.id}', this.value)">
+                <option ${data.status === "未处理" ? "selected" : ""}>未处理</option>
+                <option ${data.status === "处理中" ? "selected" : ""}>处理中</option>
+                <option ${data.status === "已完成" ? "selected" : ""}>已完成</option>
+              </select>
+            </td>
+            <td>
+              <textarea class="reply-box" placeholder="填写回应…" onchange="updateReply('${doc.id}', this.value)">${data.reply || ""}</textarea>
+            </td>
+            <td><button onclick="deleteFeedback('${doc.id}')">🗑 删除</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    function updateStatus(docId, status) {
+      db.collection("feedback").doc(docId).update({ status });
+    }
+
+    function updateReply(docId, reply) {
+      db.collection("feedback").doc(docId).update({ reply });
+    }
+
+    function deleteFeedback(docId) {
+      if (confirm("确定要删除此反馈？")) {
+        db.collection("feedback").doc(docId).delete().then(loadFeedback);
+      }
+    }
+
+    window.onload = loadFeedback;
+  </script>
+</body>
+</html>
