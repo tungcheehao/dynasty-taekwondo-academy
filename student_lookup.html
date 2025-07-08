@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>学生带级查询 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f8f8;
+      padding: 30px;
+      text-align: center;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 300px;
+      max-width: 90%;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #005f73;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0a9396;
+    }
+    .result {
+      margin-top: 30px;
+      font-size: 18px;
+    }
+    .result p {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎓 学生带级查询 / Belt Rank Lookup</h2>
+  <p>请输入学生的身份证号码（只限学生本身）</p>
+
+  <input type="text" id="icInput" placeholder="学生身份证号码">
+  <br>
+  <button onclick="lookupRank()">🔍 查询</button>
+
+  <div class="result" id="resultBox"></div>
+
+  <div style="margin-top: 30px;">
+    <a href="index.html" class="btn">🏠 回首页 / Back to Home</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696",
+      measurementId: "G-NV2HLC2PMC"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function lookupRank() {
+      const ic = document.getElementById("icInput").value.trim();
+      const resultBox = document.getElementById("resultBox");
+      resultBox.innerHTML = "⏳ 查询中...";
+
+      db.collection("members").where("ic", "==", ic).get()
+        .then(snapshot => {
+          if (snapshot.empty) {
+            resultBox.innerHTML = "❌ 找不到该学生资料。请确认身份证号码是否正确。";
+            return;
+          }
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            resultBox.innerHTML = `
+              <p><strong>姓名 / Name：</strong>${data.name || "未填写"}</p>
+              <p><strong>当前带级 / Belt Rank：</strong>${data.rank || "未登记"}</p>
+            `;
+          });
+        })
+        .catch(error => {
+          resultBox.innerHTML = "⚠️ 查询失败：" + error.message;
+        });
+    }
+  </script>
+</body>
+</html>
