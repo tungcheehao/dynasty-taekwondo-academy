@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>📘 教练日志 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    form {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    .log-container {
+      max-width: 900px;
+      margin: 30px auto;
+    }
+    .log-entry {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .log-entry img, .log-entry video {
+      max-width: 100%;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+    .comment-section {
+      margin-top: 10px;
+    }
+    .comment {
+      font-size: 14px;
+      margin: 5px 0;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4px;
+    }
+    .like-btn {
+      background: none;
+      color: #e76f51;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>📘 教练日志 / Coach Log</h2>
+
+  <form id="logForm">
+    <input type="text" id="title" placeholder="日志标题 / Title" required>
+    <textarea id="content" placeholder="日志内容 / Log content..." rows="5" required></textarea>
+    <input type="file" id="mediaFile" accept="image/*,video/*">
+    <button type="submit">📤 发布日志</button>
+  </form>
+
+  <div class="log-container" id="logContainer">
+    <!-- 教练日志将显示于此 -->
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    const logForm = document.getElementById("logForm");
+    const logContainer = document.getElementById("logContainer");
+
+    auth.onAuthStateChanged(user => {
+      if (!user) return;
+      loadLogs();
+    });
+
+    logForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value;
+      const content = document.getElementById("content").value;
+      const file = document.getElementById("mediaFile").files[0];
+
+      let mediaUrl = "";
+      let mediaType = "";
+
+      if (file) {
+        const ref = storage.ref().child("coachLogs/" + file.name);
+        await ref.put(file);
+        mediaUrl = await ref.getDownloadURL();
+        mediaType = file.type.startsWith("video") ? "video" : "image";
+      }
+
+      await db.collection("coach_logs").add({
+        title,
+        content,
+        mediaUrl,
+        mediaType,
+        author: auth.currentUser.email,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        likes: [],
+        comments: []
+      });
+
+      logForm.reset();
+      loadLogs();
+    });
+
+    function loadLogs() {
+      db.collection("coach_logs").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+        logContainer.innerHTML = "";
+        snapshot.forEach(doc => {
+          const log = doc.data();
+          const div = document.createElement("div");
+          div.className = "log-entry";
+          div.innerHTML = `
+            <h3>${log.title}</h3>
+            <p>${log.content}</p>
+            ${log.mediaUrl ? (log.mediaType === "video" 
+              ? `<video controls src="${log.mediaUrl}"></video>`
+              : `<img src="${log.mediaUrl}" alt="教练图片">`) : ""}
+            <button class="like-btn" onclick="likeLog('${doc.id}')">👍🏻 ${log.likes?.length || 0}</button>
+            <div class="comment-section" id="comments-${doc.id}">
+              ${(log.comments || []).map(c => `<div class="comment"><strong>${c.user}:</strong> ${c.text}</div>`).join("")}
+              <input type="text" placeholder="留言 / Comment" onkeydown="submitComment(event, '${doc.id}')">
+            </div>
+          `;
+          logContainer.appendChild(div);
+        });
+      });
+    }
+
+    function likeLog(id) {
+      const user = auth.currentUser;
+      const ref = db.collection("coach_logs").doc(id);
+      ref.get().then(doc => {
+        const data = doc.data();
+        const likes = data.likes || [];
+        if (!likes.includes(user.email)) {
+          ref.update({ likes: [...likes, user.email] });
+        }
+      });
+    }
+
+    function submitComment(e, logId) {
+      if (e.key === "Enter") {
+        const user = auth.currentUser;
+        const input = e.target;
+        const text = input.value.trim();
+        if (!text) return;
+        const ref = db.collection("coach_logs").doc(logId);
+        ref.update({
+          comments: firebase.firestore.FieldValue.arrayUnion({ user: user.email, text })
+        }).then(() => {
+          input.value = "";
+        });
+      }
+    }
+  </script>
+</body>
+</html>
