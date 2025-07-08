@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>积分排行榜 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    .tab {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .tab button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      background-color: #005f73;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .tab button.active {
+      background-color: #0a9396;
+    }
+    table {
+      width: 100%;
+      max-width: 800px;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background-color: #fcd5ce;
+    }
+    .note {
+      max-width: 800px;
+      margin: 30px auto;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <h2>🏅 学生积分排行榜 / Student Ranking</h2>
+
+  <div class="tab">
+    <button onclick="switchType('品势 Poomsae')" class="active">品势</button>
+    <button onclick="switchType('竞技 Kyorugi')">竞技</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>名次</th>
+        <th>学生邮箱</th>
+        <th>总积分</th>
+      </tr>
+    </thead>
+    <tbody id="rankingBody"></tbody>
+  </table>
+
+  <div class="note">
+    📘 <strong>积分计算规则：</strong><br>
+    <ul>
+      <li>国际赛事：10分，金牌+8、银牌+6、铜牌+4</li>
+      <li>全国赛事：8分，金牌+7、银牌+5、铜牌+3</li>
+      <li>全州赛事：6分，金牌+6、银牌+4、铜牌+2</li>
+      <li>邀请赛：4分，金牌+3、银牌+2、铜牌+1</li>
+    </ul>
+    （积分来自比赛成绩记录，将自动同步。）
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const body = document.getElementById("rankingBody");
+    const buttons = document.querySelectorAll(".tab button");
+
+    const levelPoints = {
+      "国际赛事": 10,
+      "全国赛事": 8,
+      "全州赛事": 6,
+      "邀请赛": 4
+    };
+
+    const medalPoints = {
+      "金牌": { 国际赛事: 8, 全国赛事: 7, 全州赛事: 6, 邀请赛: 3 },
+      "银牌": { 国际赛事: 6, 全国赛事: 5, 全州赛事: 4, 邀请赛: 2 },
+      "铜牌": { 国际赛事: 4, 全国赛事: 3, 全州赛事: 2, 邀请赛: 1 }
+    };
+
+    let currentType = "品势 Poomsae";
+
+    function switchType(type) {
+      currentType = type;
+      buttons.forEach(btn => {
+        btn.classList.remove("active");
+        if (btn.textContent.includes(type.split(" ")[0])) btn.classList.add("active");
+      });
+      loadRanking();
+    }
+
+    function loadRanking() {
+      body.innerHTML = "";
+      const scores = {};
+      db.collection("competition_results")
+        .where("category", "==", currentType)
+        .get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            const d = doc.data();
+            const email = d.email;
+            const level = d.level || "";
+            const medal = d.medal || "";
+            const base = levelPoints[level] || 0;
+            const bonus = (medalPoints[medal] && medalPoints[medal][level]) || 0;
+            const score = base + bonus;
+            scores[email] = (scores[email] || 0) + score;
+          });
+
+          const sorted = Object.entries(scores)
+            .sort((a, b) => b[1] - a[1]);
+
+          if (sorted.length === 0) {
+            body.innerHTML = "<tr><td colspan='3'>暂无成绩记录</td></tr>";
+            return;
+          }
+
+          sorted.forEach(([email, total], index) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${index + 1}</td>
+              <td>${email}</td>
+              <td>${total}</td>
+            `;
+            body.appendChild(tr);
+          });
+        });
+    }
+
+    loadRanking();
+  </script>
+</body>
+</html>
