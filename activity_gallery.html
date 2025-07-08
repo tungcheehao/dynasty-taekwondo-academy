@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>📸 活动画廊 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    form {
+      margin: 20px auto;
+      max-width: 500px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .gallery-item {
+      border: 1px solid #ccc;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      width: 220px;
+      text-align: center;
+    }
+    .gallery-item img, .gallery-item video {
+      width: 100%;
+      max-height: 180px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .delete-btn {
+      background-color: #d62828;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .back-link {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .back-link a {
+      background-color: #005f73;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>📸 活动画廊 / Activity Gallery</h2>
+
+  <form id="uploadForm">
+    <input type="text" id="caption" placeholder="标题 / Caption" required>
+    <input type="file" id="fileInput" accept="image/*,video/*" required>
+    <button type="submit">📤 上传</button>
+  </form>
+
+  <div class="gallery" id="galleryContainer">
+    <!-- 活动图片或影片将出现在此 -->
+  </div>
+
+  <div class="back-link">
+    <a href="admin.html">← 返回后台</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    const uploadForm = document.getElementById("uploadForm");
+    const galleryContainer = document.getElementById("galleryContainer");
+
+    auth.onAuthStateChanged(user => {
+      if (!user || user.email !== "admin@dynastytkd.com") {
+        alert("仅管理员可访问此页面");
+        window.location.href = "login_register.html";
+      } else {
+        loadGallery();
+      }
+    });
+
+    uploadForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const caption = document.getElementById("caption").value;
+      const file = document.getElementById("fileInput").files[0];
+      const fileRef = storage.ref().child("gallery/" + file.name);
+      await fileRef.put(file);
+      const url = await fileRef.getDownloadURL();
+      await db.collection("gallery").add({
+        caption,
+        url,
+        type: file.type.startsWith("video") ? "video" : "image",
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      uploadForm.reset();
+      loadGallery();
+    });
+
+    function loadGallery() {
+      db.collection("gallery").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+        galleryContainer.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const box = document.createElement("div");
+          box.className = "gallery-item";
+          box.innerHTML = `
+            <div><strong>${data.caption || "无标题"}</strong></div>
+            ${data.type === "video" 
+              ? `<video controls src="${data.url}"></video>` 
+              : `<img src="${data.url}" alt="活动照片">`}
+            <button class="delete-btn" onclick="deleteItem('${doc.id}', '${data.url}')">删除</button>
+          `;
+          galleryContainer.appendChild(box);
+        });
+      });
+    }
+
+    function deleteItem(id, fileUrl) {
+      if (confirm("确定要删除该项目？")) {
+        const fileRef = storage.refFromURL(fileUrl);
+        fileRef.delete().then(() => {
+          db.collection("gallery").doc(id).delete();
+        });
+      }
+    }
+  </script>
+</body>
+</html>
