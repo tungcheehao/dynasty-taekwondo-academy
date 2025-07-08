@@ -2,14 +2,14 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>🛒 订单管理 - Dynasty Taekwondo</title>
+  <title>订单管理 - Dynasty Taekwondo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
       padding: 20px;
-      background-color: #f4f4f4;
     }
     h2 {
       text-align: center;
@@ -18,120 +18,106 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      background-color: #fff;
-      margin-top: 20px;
+      margin-top: 30px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
     th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
+      padding: 12px;
+      border: 1px solid #ddd;
       text-align: center;
     }
     th {
-      background-color: #005f73;
-      color: #fff;
+      background-color: #a2d5f2;
     }
-    .btn-delete {
-      background-color: #d62828;
-      color: white;
-      padding: 5px 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+    input[type="text"] {
+      width: 300px;
+      padding: 8px;
+      margin-bottom: 20px;
     }
-    .btn-delete:hover {
-      background-color: #a4161a;
-    }
-    .back-home {
-      display: block;
-      text-align: center;
-      margin-top: 30px;
-    }
-    .back-home a {
-      text-decoration: none;
-      background-color: #005f73;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 6px;
+    .status-select {
+      padding: 6px;
     }
   </style>
 </head>
 <body>
-  <h2>🛒 学生订单管理</h2>
+  <h2>📦 订单管理 / Manage Orders</h2>
+
+  <div style="text-align:center;">
+    <input type="text" id="searchInput" placeholder="🔍 搜索邮箱 / Search by email" oninput="filterOrders()">
+  </div>
+
   <table id="orderTable">
     <thead>
       <tr>
-        <th>学生姓名</th>
-        <th>邮箱</th>
-        <th>商品名称</th>
-        <th>数量</th>
-        <th>下单时间</th>
-        <th>操作</th>
+        <th>下单人邮箱 Email</th>
+        <th>商品名称 Product</th>
+        <th>数量 Quantity</th>
+        <th>下单时间 Time</th>
+        <th>订单状态 Status</th>
       </tr>
     </thead>
     <tbody>
-      <!-- 动态插入 -->
+      <!-- 动态填充 -->
     </tbody>
   </table>
 
-  <div class="back-home">
-    <a href="admin.html">← 返回管理员后台</a>
+  <div style="text-align:center; margin-top: 30px;">
+    <a href="admin.html" class="btn">⬅️ 返回后台</a>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696",
-      measurementId: "G-NV2HLC2PMC"
+      // 替换为你的 Firebase 配置
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const auth = firebase.auth();
 
-    const tableBody = document.querySelector("#orderTable tbody");
-
-    auth.onAuthStateChanged((user) => {
-      if (user && user.email === "admin@dynastytkd.com") {
-        db.collection("shop_orders").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-          tableBody.innerHTML = "";
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${data.name || ""}</td>
-              <td>${data.email || ""}</td>
-              <td>${data.item || ""}</td>
-              <td>${data.quantity || 1}</td>
-              <td>${data.timestamp?.toDate().toLocaleString() || ""}</td>
-              <td><button class="btn-delete" onclick="deleteOrder('${doc.id}')">删除</button></td>
-            `;
-            tableBody.appendChild(row);
-          });
-        });
-      } else {
-        alert("仅限管理员查看此页面！");
-        window.location.href = "login_register.html";
-      }
-    });
-
-    function deleteOrder(id) {
-      if (confirm("确定要删除这条订单记录？")) {
-        db.collection("shop_orders").doc(id).delete()
-          .then(() => {
-            alert("订单已删除");
-          })
-          .catch((error) => {
-            alert("删除失败：" + error.message);
-          });
-      }
+    async function loadOrders() {
+      const table = document.querySelector("#orderTable tbody");
+      table.innerHTML = "";
+      const snapshot = await db.collection("orders").orderBy("timestamp", "desc").get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${data.email}</td>
+          <td>${data.productName}</td>
+          <td>${data.quantity}</td>
+          <td>${new Date(data.timestamp?.toDate()).toLocaleString()}</td>
+          <td>
+            <select class="status-select" onchange="updateStatus('${doc.id}', this.value)">
+              <option value="已下单" ${data.status === "已下单" ? "selected" : ""}>已下单</option>
+              <option value="处理中" ${data.status === "处理中" ? "selected" : ""}>处理中</option>
+              <option value="已完成" ${data.status === "已完成" ? "selected" : ""}>已完成</option>
+              <option value="已取消" ${data.status === "已取消" ? "selected" : ""}>已取消</option>
+            </select>
+          </td>
+        `;
+        table.appendChild(tr);
+      });
     }
+
+    function updateStatus(orderId, newStatus) {
+      db.collection("orders").doc(orderId).update({ status: newStatus })
+        .then(() => {
+          alert("订单状态已更新！");
+        });
+    }
+
+    function filterOrders() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const rows = document.querySelectorAll("#orderTable tbody tr");
+      rows.forEach(row => {
+        const email = row.cells[0].textContent.toLowerCase();
+        row.style.display = email.includes(input) ? "" : "none";
+      });
+    }
+
+    loadOrders();
   </script>
 </body>
 </html>
