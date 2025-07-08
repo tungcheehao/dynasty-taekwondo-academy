@@ -2,166 +2,101 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>跆拳道用品选购 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>跆拳道用品商店 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f8f8;
       padding: 20px;
-      background-color: #f0f0f0;
     }
     h2 {
       text-align: center;
       color: #003049;
     }
-    .product-list {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 20px;
+      max-width: 1200px;
       margin: 30px auto;
-      max-width: 1000px;
     }
-    .product {
-      background: white;
+    .item {
+      background-color: white;
+      border: 1px solid #ddd;
       border-radius: 8px;
       padding: 15px;
-      width: 220px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
       text-align: center;
     }
-    .product img {
+    .item img {
       max-width: 100%;
+      height: auto;
       border-radius: 6px;
+      margin-bottom: 10px;
     }
-    .product h4 {
+    .item h3 {
       margin: 10px 0 5px;
+      font-size: 18px;
+      color: #005f73;
+    }
+    .item p {
       font-size: 16px;
+      margin-bottom: 10px;
     }
-    .product p {
-      font-size: 14px;
-      color: #555;
-    }
-    .product span {
-      display: block;
-      margin-top: 8px;
-      font-weight: bold;
-      color: #d62828;
-    }
-    form {
-      max-width: 500px;
-      margin: 40px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    label {
-      font-weight: bold;
-      margin-top: 10px;
-      display: block;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      font-size: 15px;
-    }
-    button {
+    .item button {
       background-color: #005f73;
       color: white;
+      padding: 10px 16px;
       border: none;
-      margin-top: 20px;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
+      font-size: 15px;
     }
-    button:hover {
+    .item button:hover {
       background-color: #0a9396;
     }
   </style>
 </head>
 <body>
-  <h2>🛍️ 跆拳道用品选购 / Taekwondo Gear Shop</h2>
+  <h2>🛍️ 跆拳道用品商店<br>Taekwondo Equipment Shop</h2>
 
-  <div class="product-list">
-    <div class="product">
-      <img src="https://via.placeholder.com/200x150?text=白带" alt="白带">
-      <h4>白带</h4>
-      <p>初学者专用</p>
-      <span>RM 10</span>
-    </div>
-    <div class="product">
-      <img src="https://via.placeholder.com/200x150?text=跆拳道制服" alt="跆拳道制服">
-      <h4>跆拳道制服</h4>
-      <p>适合所有学员</p>
-      <span>RM 110</span>
-    </div>
-    <div class="product">
-      <img src="https://via.placeholder.com/200x150?text=护具套装" alt="护具套装">
-      <h4>护具套装</h4>
-      <p>比赛标准装备</p>
-      <span>RM 250</span>
-    </div>
+  <div class="shop-grid" id="shopGrid">
+    <!-- 商品卡片将通过 JS 动态生成 -->
   </div>
 
-  <form id="orderForm">
-    <h3 style="text-align:center;">📝 下订单 / Place an Order</h3>
-
-    <label for="name">姓名 / Name</label>
-    <input type="text" id="name" required>
-
-    <label for="email">邮箱 / Email</label>
-    <input type="email" id="email" required>
-
-    <label for="product">商品 / Product</label>
-    <select id="product" required>
-      <option value="">请选择商品</option>
-      <option value="白带">白带 - RM10</option>
-      <option value="跆拳道制服">跆拳道制服 - RM110</option>
-      <option value="护具套装">护具套装 - RM250</option>
-    </select>
-
-    <label for="quantity">数量 / Quantity</label>
-    <input type="number" id="quantity" min="1" value="1" required>
-
-    <label for="notes">备注 / Notes</label>
-    <input type="text" id="notes" placeholder="如需特定尺寸、颜色等">
-
-    <button type="submit">📤 提交订单</button>
-  </form>
+  <div style="text-align:center; margin-top: 30px;">
+    <a href="index.html" class="btn">🏠 返回首页 / Back to Home</a>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 配置
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const form = document.getElementById("orderForm");
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    async function loadShopItems() {
+      const container = document.getElementById("shopGrid");
+      const snapshot = await db.collection("shop_items").get();
+      snapshot.forEach(doc => {
+        const item = doc.data();
+        const card = document.createElement("div");
+        card.className = "item";
+        card.innerHTML = `
+          <img src="${item.imageUrl}" alt="${item.name}">
+          <h3>${item.name}</h3>
+          <p>价格 Price: RM ${item.price}</p>
+          <button onclick="alert('请联系管理员线下下单。')">下单 / Order</button>
+        `;
+        container.appendChild(card);
+      });
+    }
 
-      const data = {
-        name: form.name.value,
-        email: form.email.value,
-        product: form.product.value,
-        quantity: parseInt(form.quantity.value),
-        notes: form.notes.value,
-        timestamp: new Date().toISOString()
-      };
-
-      await db.collection("shop_orders").add(data);
-      alert("✅ 订单已提交成功！我们将尽快与您联系。");
-      form.reset();
-    });
+    loadShopItems();
   </script>
 </body>
 </html>
