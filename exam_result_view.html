@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>我的考试记录 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    table {
+      width: 100%;
+      max-width: 900px;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+      font-size: 15px;
+    }
+    th {
+      background-color: #a2d5f2;
+    }
+    .note {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      margin-top: 20px;
+    }
+    .back {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .back a {
+      color: #005f73;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>📄 我的考试记录<br>My Exam Records</h2>
+
+  <div id="userEmail" class="note">加载中...</div>
+
+  <table id="examRecordTable">
+    <thead>
+      <tr>
+        <th>考试名称</th>
+        <th>日期</th>
+        <th>成绩</th>
+        <th>考官</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="back">
+    <a href="student_zone.html">🔙 返回学生专区</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const tableBody = document.querySelector("#examRecordTable tbody");
+    const userEmailDisplay = document.getElementById("userEmail");
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        userEmailDisplay.innerHTML = "当前登录：" + user.email;
+        db.collection("event_registrations")
+          .where("email", "==", user.email)
+          .where("eventType", "==", "考试 / Exam")
+          .orderBy("eventDate", "desc")
+          .get()
+          .then(snapshot => {
+            tableBody.innerHTML = "";
+            snapshot.forEach(doc => {
+              const d = doc.data();
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${d.eventTitle}</td>
+                <td>${d.eventDate}</td>
+                <td>${d.result || "-"}</td>
+                <td>${d.examiner || "-"}</td>
+              `;
+              tableBody.appendChild(tr);
+            });
+            if (snapshot.empty) {
+              tableBody.innerHTML = `<tr><td colspan="4">无考试记录 / No exam records found</td></tr>`;
+            }
+          });
+      } else {
+        userEmailDisplay.innerHTML = "尚未登录 / Not logged in";
+        tableBody.innerHTML = `<tr><td colspan="4">请先登录查看您的考试记录</td></tr>`;
+      }
+    });
+  </script>
+</body>
+</html>
