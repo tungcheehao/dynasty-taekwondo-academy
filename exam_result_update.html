@@ -2,14 +2,14 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>考试成绩管理 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>考试成绩更新 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f9f9f9;
-      padding: 30px;
+      padding: 20px;
+      background-color: #f4f4f4;
     }
     h2 {
       text-align: center;
@@ -17,152 +17,169 @@
     }
     table {
       width: 100%;
+      max-width: 1000px;
+      margin: auto;
+      background: white;
       border-collapse: collapse;
-      margin-top: 20px;
-      background-color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     th, td {
       padding: 10px;
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       text-align: center;
-      font-size: 14px;
     }
     th {
       background-color: #a2d5f2;
     }
     select, input {
-      padding: 6px;
-      font-size: 14px;
+      padding: 5px;
+      width: 90%;
     }
     button {
-      padding: 6px 12px;
-      font-size: 13px;
-      margin: 2px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .save-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
       background-color: #005f73;
       color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
     }
-    .delete-btn {
-      background-color: #d00000;
-      color: white;
-    }
-    .save-btn:hover {
+    button:hover {
       background-color: #0a9396;
     }
-    .delete-btn:hover {
-      background-color: #ef233c;
-    }
-    .back {
+    .center {
       text-align: center;
-      margin-top: 30px;
-    }
-    .back a {
-      text-decoration: none;
-      color: #005f73;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
-  <h2>📑 考试成绩管理</h2>
-  <table id="examTable">
-    <thead>
-      <tr>
-        <th>学生姓名</th>
-        <th>IC</th>
-        <th>项目</th>
-        <th>考试名称</th>
-        <th>日期</th>
-        <th>成绩</th>
-        <th>考官</th>
-        <th>操作</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <h2>📊 考试成绩更新 / Update Exam Results</h2>
 
-  <div class="back">
-    <a href="admin.html">🔙 返回后台</a>
+  <div class="center">
+    <label for="examSelect">选择考试项目 / Select Exam:</label>
+    <select id="examSelect">
+      <option value="">-- 请选择 --</option>
+    </select>
   </div>
+
+  <form id="resultForm">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>学生身份证号 / NRIC</th>
+          <th>学生姓名</th>
+          <th>成绩 / Result</th>
+          <th>考官 / Examiner</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="center">
+      <button type="submit">💾 保存成绩</button>
+    </div>
+  </form>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 配置
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const tableBody = document.querySelector("#examTable tbody");
+    const examSelect = document.getElementById("examSelect");
+    const resultForm = document.getElementById("resultForm");
+    const resultsTableBody = document.querySelector("#resultsTable tbody");
 
-    function loadExams() {
-      db.collection("event_registrations").orderBy("eventDate", "desc").get().then(snapshot => {
-        tableBody.innerHTML = "";
+    function loadExamOptions() {
+      db.collection("events").where("type", "==", "exam").get().then(snapshot => {
         snapshot.forEach(doc => {
           const data = doc.data();
-          const id = doc.id;
-          if (data.eventType !== "考试 / Exam") return;
-
-          const result = data.result || "";
-          const examiner = data.examiner || "";
-          const tr = document.createElement("tr");
-
-          tr.innerHTML = `
-            <td>${data.name}</td>
-            <td>${data.ic}</td>
-            <td>${data.eventType}</td>
-            <td>${data.eventTitle}</td>
-            <td>${data.eventDate}</td>
-            <td>
-              <select id="result-${id}">
-                <option value="">请选择</option>
-                <option value="Pass" ${result === "Pass" ? "selected" : ""}>Pass</option>
-                <option value="Fail" ${result === "Fail" ? "selected" : ""}>Fail</option>
-                <option value="No Show" ${result === "No Show" ? "selected" : ""}>No Show</option>
-              </select>
-            </td>
-            <td><input type="text" id="examiner-${id}" value="${examiner}" placeholder="Examiner Name"></td>
-            <td>
-              <button class="save-btn" onclick="saveResult('${id}')">保存</button>
-              <button class="delete-btn" onclick="deleteRecord('${id}')">删除</button>
-            </td>
-          `;
-          tableBody.appendChild(tr);
+          const opt = document.createElement("option");
+          opt.value = doc.id;
+          opt.textContent = `${data.title} (${data.date})`;
+          examSelect.appendChild(opt);
         });
       });
     }
 
-    function saveResult(id) {
-      const result = document.getElementById(`result-${id}`).value;
-      const examiner = document.getElementById(`examiner-${id}`).value.trim();
-      db.collection("event_registrations").doc(id).update({
-        result: result,
-        examiner: examiner
-      }).then(() => {
-        alert("✅ 成绩已更新！");
+    function loadRegisteredStudents(examId) {
+      resultsTableBody.innerHTML = "<tr><td colspan='4'>加载中...</td></tr>";
+      db.collection("event_registrations").where("eventId", "==", examId).get().then(snapshot => {
+        resultsTableBody.innerHTML = "";
+        if (snapshot.empty) {
+          resultsTableBody.innerHTML = "<tr><td colspan='4'>无报名学生</td></tr>";
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const regData = doc.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${regData.studentNric}</td>
+            <td>${regData.studentName || "-"}</td>
+            <td>
+              <select class="resultSelect" data-nric="${regData.studentNric}">
+                <option value="">--</option>
+                <option value="Pass">Pass</option>
+                <option value="Fail">Fail</option>
+                <option value="No Show">No Show</option>
+              </select>
+            </td>
+            <td><input type="text" class="examinerInput" data-nric="${regData.studentNric}" placeholder="考官 / Examiner"></td>
+          `;
+          resultsTableBody.appendChild(row);
+        });
+      });
+    }
+
+    examSelect.addEventListener("change", () => {
+      const examId = examSelect.value;
+      if (examId) {
+        loadRegisteredStudents(examId);
+      } else {
+        resultsTableBody.innerHTML = "";
+      }
+    });
+
+    resultForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const examId = examSelect.value;
+      if (!examId) {
+        alert("请选择一个考试项目");
+        return;
+      }
+
+      const rows = resultsTableBody.querySelectorAll("tr");
+      const batch = db.batch();
+
+      rows.forEach(row => {
+        const nric = row.querySelector(".resultSelect").dataset.nric;
+        const result = row.querySelector(".resultSelect").value;
+        const examiner = row.querySelector(".examinerInput").value.trim();
+
+        const docRef = db.collection("exam_results").doc(`${examId}_${nric}`);
+        batch.set(docRef, {
+          examId,
+          studentNric: nric,
+          result,
+          examiner,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+
+      batch.commit().then(() => {
+        alert("考试成绩已保存！");
       }).catch(err => {
-        alert("❌ 错误：" + err.message);
+        console.error("保存失败", err);
+        alert("保存失败：" + err.message);
       });
-    }
+    });
 
-    function deleteRecord(id) {
-      if (!confirm("确定要删除该报名记录？")) return;
-      db.collection("event_registrations").doc(id).delete().then(() => {
-        alert("✅ 已删除");
-        loadExams();
-      });
-    }
-
-    loadExams();
+    loadExamOptions();
   </script>
 </body>
 </html>
