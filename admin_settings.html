@@ -2,196 +2,127 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>⚙️ 后台设置 - Dynasty Taekwondo</title>
+  <title>系统设置 - Admin Settings | Dynasty Taekwondo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f1f5f8;
-      color: #333;
+      background-color: #f0f0f0;
       padding: 20px;
     }
     h2 {
       text-align: center;
       color: #003049;
     }
-    .section {
-      background: white;
-      padding: 20px;
-      margin: 20px auto;
+    .settings-container {
       max-width: 800px;
-      border-radius: 10px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    h3 {
-      color: #005f73;
-      margin-top: 10px;
+    .setting-item {
+      margin-bottom: 25px;
     }
-    label, input, select, button {
+    label {
+      font-weight: bold;
       display: block;
+      margin-bottom: 8px;
+    }
+    select, input[type="text"], textarea {
       width: 100%;
-      margin: 8px 0;
       padding: 10px;
-      font-size: 15px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
     button {
+      padding: 12px 20px;
       background-color: #005f73;
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 16px;
     }
     button:hover {
       background-color: #0a9396;
     }
-    .admin-list {
-      margin-top: 10px;
-    }
-    .admin-list-item {
-      padding: 10px;
-      background: #eef;
-      margin-bottom: 5px;
-      border-radius: 5px;
-    }
-    .back {
-      text-align: center;
-      margin-top: 30px;
-    }
-    .back a {
-      padding: 10px 20px;
-      background: #003049;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-    }
   </style>
 </head>
 <body>
-  <h2>⚙️ 网站系统管理 / Admin Settings</h2>
 
-  <div class="section">
-    <h3>📛 管理员权限设定 / Manage Admins</h3>
-    <form id="adminForm">
-      <label>新增管理员电邮 / Add Admin Email</label>
-      <input type="email" id="adminEmail" placeholder="admin@example.com" required>
-      <label>选择权限等级 / Set Role</label>
-      <select id="adminRole" required>
-        <option value="full">完全权限 Full Access</option>
-        <option value="exam">考试管理 Exam Only</option>
-        <option value="shop">商店管理 Shop Only</option>
-        <option value="gallery">活动管理 Gallery Only</option>
+  <h2>⚙️ 系统设置 / Admin Settings</h2>
+
+  <div class="settings-container">
+
+    <div class="setting-item">
+      <label>🌐 网站语言 / Site Language</label>
+      <select id="languageSelect">
+        <option value="zh">中文 (Chinese)</option>
+        <option value="en">English</option>
       </select>
-      <button type="submit">✅ 添加管理员</button>
-    </form>
-
-    <div class="admin-list" id="adminList">
-      <!-- 管理员列表 -->
     </div>
-  </div>
 
-  <div class="section">
-    <h3>🧠 页面部署控制 / Page Control</h3>
-    <p>⚠️ 请在此处设定首页或其他页面是否上线</p>
-    <label>
-      首页部署状态 / Home Page Status:
-      <select id="homeStatus">
-        <option value="online">上线 / Online</option>
-        <option value="offline">下线 / Offline</option>
-      </select>
-    </label>
-    <button onclick="updatePageStatus()">保存设定</button>
-  </div>
-
-  <div class="section">
-    <h3>🔒 日志审计 / Activity Log</h3>
-    <div id="activityLogs">
-      <!-- 系统记录（谁更改了什么）将显示于此 -->
+    <div class="setting-item">
+      <label>📢 网站公告 / Site Announcement</label>
+      <textarea id="siteNotice" rows="4" placeholder="写下网站公告内容..."></textarea>
+      <button onclick="updateNotice()">更新公告 / Update Notice</button>
     </div>
-  </div>
 
-  <div class="back">
-    <a href="admin.html">← 返回后台主页</a>
+    <div class="setting-item">
+      <label>💾 数据库备份 / Database Backup</label>
+      <button onclick="backupDatabase()">立即备份 / Backup Now</button>
+    </div>
+
+    <div class="setting-item">
+      <label>📄 网站首页标语 / Homepage Slogan</label>
+      <input type="text" id="homepageSlogan" placeholder="例如：发掘潜能，迈向黑带之路...">
+      <button onclick="updateSlogan()">保存标语 / Save</button>
+    </div>
+
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 配置
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const auth = firebase.auth();
 
-    const adminForm = document.getElementById('adminForm');
-    const adminList = document.getElementById('adminList');
-    const activityLogs = document.getElementById('activityLogs');
+    function updateNotice() {
+      const notice = document.getElementById("siteNotice").value.trim();
+      db.collection("settings").doc("announcement").set({ notice })
+        .then(() => alert("网站公告已更新！"));
+    }
 
-    auth.onAuthStateChanged(user => {
-      if (!user || user.email !== "admin@dynastytkd.com") {
-        alert("仅主管理员可进入设置页面");
-        window.location.href = "login_register.html";
-      } else {
-        loadAdmins();
-        loadLogs();
+    function updateSlogan() {
+      const slogan = document.getElementById("homepageSlogan").value.trim();
+      db.collection("settings").doc("homepage").set({ slogan }, { merge: true })
+        .then(() => alert("标语已保存！"));
+    }
+
+    function backupDatabase() {
+      alert("系统已发送备份请求（实际功能需通过 Cloud Functions 实现）");
+      // 实际上需在 Firebase Cloud Functions 或服务器端处理备份
+    }
+
+    window.onload = async function () {
+      const noticeDoc = await db.collection("settings").doc("announcement").get();
+      if (noticeDoc.exists) {
+        document.getElementById("siteNotice").value = noticeDoc.data().notice || "";
       }
-    });
 
-    adminForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("adminEmail").value;
-      const role = document.getElementById("adminRole").value;
-      await db.collection("admins").doc(email).set({ role });
-      await logAction("添加管理员: " + email + "（" + role + "）");
-      adminForm.reset();
-      loadAdmins();
-    });
-
-    async function loadAdmins() {
-      const snapshot = await db.collection("admins").get();
-      adminList.innerHTML = "";
-      snapshot.forEach(doc => {
-        const div = document.createElement("div");
-        div.className = "admin-list-item";
-        div.textContent = `${doc.id} - 权限: ${doc.data().role}`;
-        adminList.appendChild(div);
-      });
-    }
-
-    async function updatePageStatus() {
-      const status = document.getElementById("homeStatus").value;
-      await db.collection("settings").doc("homepage").set({ status });
-      await logAction("更改首页部署状态为: " + status);
-      alert("设定已更新！");
-    }
-
-    async function logAction(action) {
-      const user = auth.currentUser;
-      await db.collection("logs").add({
-        action,
-        by: user.email,
-        time: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-
-    function loadLogs() {
-      db.collection("logs").orderBy("time", "desc").limit(20).onSnapshot(snapshot => {
-        activityLogs.innerHTML = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const item = document.createElement("div");
-          item.textContent = `📌 ${data.action}（by ${data.by}）`;
-          activityLogs.appendChild(item);
-        });
-      });
+      const homeDoc = await db.collection("settings").doc("homepage").get();
+      if (homeDoc.exists) {
+        document.getElementById("homepageSlogan").value = homeDoc.data().slogan || "";
+      }
     }
   </script>
+
 </body>
 </html>
