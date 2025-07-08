@@ -2,122 +2,127 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>我的考试记录 - Dynasty Taekwondo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>考试成绩查询 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f2f2;
       padding: 20px;
-      background-color: #f4f4f4;
     }
     h2 {
       text-align: center;
       color: #003049;
     }
+    .center {
+      text-align: center;
+      margin: 20px;
+    }
     table {
       width: 100%;
       max-width: 900px;
-      margin: 20px auto;
+      margin: auto;
+      background: white;
       border-collapse: collapse;
-      background-color: white;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     th, td {
       padding: 10px;
       border: 1px solid #ccc;
       text-align: center;
-      font-size: 15px;
     }
     th {
       background-color: #a2d5f2;
     }
-    .note {
-      text-align: center;
-      font-size: 14px;
-      color: #666;
-      margin-top: 20px;
-    }
-    .back {
-      text-align: center;
-      margin-top: 30px;
-    }
-    .back a {
-      color: #005f73;
-      text-decoration: none;
+    select {
+      padding: 8px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h2>📄 我的考试记录<br>My Exam Records</h2>
+  <h2>📄 考试成绩查询 / Exam Result Viewer</h2>
 
-  <div id="userEmail" class="note">加载中...</div>
+  <div class="center">
+    <label for="examSelect">选择考试项目 / Select Exam:</label>
+    <select id="examSelect">
+      <option value="">-- 请选择 --</option>
+    </select>
+  </div>
 
-  <table id="examRecordTable">
+  <table id="resultTable" style="display: none;">
     <thead>
       <tr>
-        <th>考试名称</th>
-        <th>日期</th>
+        <th>学生姓名</th>
+        <th>身份证号</th>
         <th>成绩</th>
-        <th>考官</th>
+        <th>考官 / Examiner</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <div class="back">
-    <a href="student_zone.html">🔙 返回学生专区</a>
-  </div>
-
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
-      authDomain: "dynastytkd-2d87e.firebaseapp.com",
-      projectId: "dynastytkd-2d87e",
-      storageBucket: "dynastytkd-2d87e.appspot.com",
-      messagingSenderId: "271608799011",
-      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+      // 替换为你的 Firebase 配置
     };
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const tableBody = document.querySelector("#examRecordTable tbody");
-    const userEmailDisplay = document.getElementById("userEmail");
+    const examSelect = document.getElementById("examSelect");
+    const resultTable = document.getElementById("resultTable");
+    const resultTbody = resultTable.querySelector("tbody");
 
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        userEmailDisplay.innerHTML = "当前登录：" + user.email;
-        db.collection("event_registrations")
-          .where("email", "==", user.email)
-          .where("eventType", "==", "考试 / Exam")
-          .orderBy("eventDate", "desc")
-          .get()
-          .then(snapshot => {
-            tableBody.innerHTML = "";
-            snapshot.forEach(doc => {
-              const d = doc.data();
-              const tr = document.createElement("tr");
-              tr.innerHTML = `
-                <td>${d.eventTitle}</td>
-                <td>${d.eventDate}</td>
-                <td>${d.result || "-"}</td>
-                <td>${d.examiner || "-"}</td>
-              `;
-              tableBody.appendChild(tr);
-            });
-            if (snapshot.empty) {
-              tableBody.innerHTML = `<tr><td colspan="4">无考试记录 / No exam records found</td></tr>`;
-            }
-          });
+    function loadExamOptions() {
+      db.collection("events").where("type", "==", "exam").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const opt = document.createElement("option");
+          opt.value = doc.id;
+          opt.textContent = `${data.title} (${data.date})`;
+          examSelect.appendChild(opt);
+        });
+      });
+    }
+
+    function loadResults(examId) {
+      db.collection("exam_results").where("examId", "==", examId).get().then(snapshot => {
+        resultTbody.innerHTML = "";
+        if (snapshot.empty) {
+          resultTbody.innerHTML = "<tr><td colspan='4'>无成绩记录</td></tr>";
+          resultTable.style.display = "table";
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${data.studentName || "-"}</td>
+            <td>${data.studentNric}</td>
+            <td>${data.result || "-"}</td>
+            <td>${data.examiner || "-"}</td>
+          `;
+          resultTbody.appendChild(row);
+        });
+        resultTable.style.display = "table";
+      });
+    }
+
+    examSelect.addEventListener("change", () => {
+      const examId = examSelect.value;
+      if (examId) {
+        loadResults(examId);
       } else {
-        userEmailDisplay.innerHTML = "尚未登录 / Not logged in";
-        tableBody.innerHTML = `<tr><td colspan="4">请先登录查看您的考试记录</td></tr>`;
+        resultTable.style.display = "none";
+        resultTbody.innerHTML = "";
       }
     });
+
+    loadExamOptions();
   </script>
 </body>
 </html>
