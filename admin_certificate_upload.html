@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>📤 上传证书 - Dynasty Taekwondo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      padding: 30px;
+    }
+    h2 {
+      text-align: center;
+      color: #003049;
+    }
+    form {
+      max-width: 500px;
+      margin: 30px auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    button {
+      background-color: #005f73;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0a9396;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h2>📤 上传学生证书 / Upload Certificate</h2>
+
+  <form id="certForm">
+    <label for="studentEmail">学生邮箱 / Student Email</label>
+    <input type="email" id="studentEmail" placeholder="student@example.com" required>
+
+    <label for="certTitle">证书名称 / Title</label>
+    <input type="text" id="certTitle" placeholder="如：晋级黄带、黑带培训完成…" required>
+
+    <label for="examiner">考官 / Examiner</label>
+    <input type="text" id="examiner" placeholder="如：Master Lee">
+
+    <label for="certDate">考试/课程日期</label>
+    <input type="date" id="certDate" required>
+
+    <label for="certFile">上传证书图像或PDF</label>
+    <input type="file" id="certFile" accept="image/*,application/pdf" required>
+
+    <button type="submit">✅ 上传证书</button>
+  </form>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOn4TMNAzchDaM2X8cQN_3GeLw4OPNPnM",
+      authDomain: "dynastytkd-2d87e.firebaseapp.com",
+      projectId: "dynastytkd-2d87e",
+      storageBucket: "dynastytkd-2d87e.appspot.com",
+      messagingSenderId: "271608799011",
+      appId: "1:271608799011:web:bee1fd1bf4ee1113383696"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    const storage = firebase.storage();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert("请先登录管理员帐号");
+        location.href = "login_register.html";
+      }
+    });
+
+    document.getElementById("certForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("studentEmail").value.trim();
+      const title = document.getElementById("certTitle").value.trim();
+      const examiner = document.getElementById("examiner").value.trim();
+      const date = document.getElementById("certDate").value;
+      const file = document.getElementById("certFile").files[0];
+
+      if (!email || !title || !date || !file) {
+        alert("请完整填写表格");
+        return;
+      }
+
+      const filename = Date.now() + "_" + file.name;
+      const fileRef = storage.ref("certificates/" + filename);
+
+      try {
+        const uploadTask = await fileRef.put(file);
+        const fileURL = await uploadTask.ref.getDownloadURL();
+
+        await db.collection("certificates").add({
+          userEmail: email,
+          title: title,
+          examiner: examiner,
+          date: new Date(date),
+          imageUrl: fileURL,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert("✅ 证书上传成功！");
+        document.getElementById("certForm").reset();
+      } catch (error) {
+        console.error("上传失败:", error);
+        alert("❌ 上传失败，请检查网络或重试");
+      }
+    });
+  </script>
+</body>
+</html>
